@@ -22,6 +22,7 @@
     <ErrorReport>prompt</ErrorReport>
     <WarningLevel>4</WarningLevel>
     <DocumentationFile>bin\Debug\Runing.Increment.xml</DocumentationFile>
+    <NoWarn>CS1591</NoWarn>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release|AnyCPU' ">
     <DebugType>pdbonly</DebugType>
@@ -53,8 +54,13 @@
     <Compile Include="Common\Zip3Party.cs" />
     <Compile Include="Data\DownloadFile.cs" />
     <Compile Include="Data\DownloadFiles.cs" />
+    <Compile Include="Data\Server\FileItem.cs" />
+    <Compile Include="Data\Server\FileItems.cs" />
     <Compile Include="IDF.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
+  </ItemGroup>
+  <ItemGroup>
+    <Folder Include="Data\Client\" />
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
 </Project>
