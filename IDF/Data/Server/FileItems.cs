@@ -9,14 +9,13 @@ namespace Runing.Increment
 {
     class FileItems : IXMLSerialize
     {
-        Dictionary<string, FileItem> _fileItemDict = new Dictionary<string, FileItem>();
+        public Dictionary<string, FileItem> _fileItemDict = new Dictionary<string, FileItem>();
 
         public void Add(FileItem fileItem)
         {
-            string path = fileItem.relativePath + fileItem.fileName;
-            if (_fileItemDict.ContainsKey(path))
+            if (_fileItemDict.ContainsKey(fileItem.relativePath))
             {
-                Log.Warning("FileItems.Add()-> 存在一样的路径名字 " + );
+                Log.Warning("FileItems.Add()-> 存在一样的路径名字 " + fileItem.relativePath);
             }
         }
 
@@ -27,7 +26,7 @@ namespace Runing.Increment
 
         public XmlElement ToXml(XmlElement parent)
         {
-            
+            return null;
         }
     }
 }

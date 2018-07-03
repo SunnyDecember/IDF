@@ -7,7 +7,7 @@ using System.Xml;
 
 namespace Runing.Increment
 {
-    class FileItem
+    public class FileItem
     {
         /// <summary>
         /// 服务器的目录
@@ -59,10 +59,10 @@ namespace Runing.Increment
             child = node.AppendChild("relativePath", this.relativePath);
             child.AddComment("相对路径");
 
-            child = node.AppendChild("hashSHA1", this.MD5);
+            child = node.AppendChild("MD5", this.MD5);
             child.AddComment("MD5值");
 
-            child = node.AppendChild("fileSize", this.size);
+            child = node.AppendChild("size", this.size);
             child.AddComment("文件大小Byte");
 
             return node;

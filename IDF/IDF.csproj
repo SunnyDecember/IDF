@@ -36,6 +36,9 @@
     <Reference Include="Ionic.Zip.Unity">
       <HintPath>..\dotnetzip-for-unity\Binaries\Release\Ionic.Zip.Unity.dll</HintPath>
     </Reference>
+    <Reference Include="JumpKick.HttpLib, Version=2.0.16.77, Culture=neutral, processorArchitecture=MSIL">
+      <HintPath>..\packages\HttpLib.2.0.16.77\lib\net45\JumpKick.HttpLib.dll</HintPath>
+    </Reference>
     <Reference Include="System" />
     <Reference Include="System.Core" />
     <Reference Include="System.Xml.Linq" />
@@ -52,15 +55,18 @@
     <Compile Include="Common\Log.cs" />
     <Compile Include="Common\XmlHelper.cs" />
     <Compile Include="Common\Zip3Party.cs" />
+    <Compile Include="Data\Client\FileItemClient.cs" />
     <Compile Include="Data\DownloadFile.cs" />
     <Compile Include="Data\DownloadFiles.cs" />
     <Compile Include="Data\Server\FileItem.cs" />
     <Compile Include="Data\Server\FileItems.cs" />
-    <Compile Include="IDF.cs" />
+    <Compile Include="IDFHelper.cs" />
+    <Compile Include="IDFClient.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
+    <Compile Include="Logic\UpdateTask.cs" />
   </ItemGroup>
   <ItemGroup>
-    <Folder Include="Data\Client\" />
+    <None Include="packages.config" />
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
 </Project>
