@@ -1,0 +1,6 @@
+[submodule "dotnetzip-for-unity"]
+	path = dotnetzip-for-unity
+	url = https://github.com/r2d2rigo/dotnetzip-for-unity
+[submodule "DFile"]
+	path = DFile
+	url = git@github.com:daixian/DFile.git
