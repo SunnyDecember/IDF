@@ -1,13 +1,11 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-using System.Xml;
+﻿using System.Xml;
 
 namespace Runing.Increment
 {
-    public class FileItem
+    /// <summary>
+    /// 原始文件项
+    /// </summary>
+    internal class FileItem
     {
         /// <summary>
         /// 服务器的目录
@@ -29,17 +27,18 @@ namespace Runing.Increment
         /// </summary>
         public long size;
 
+        #region xml <-> obj
 
         /// <summary>
         /// 从一个xml节点对自己的字段赋值
         /// </summary>
-        /// <param name="element">输入的用来读取的xml节点</param>
-        public void FromXml(XmlElement element)
+        /// <param name="node">输入的用来读取的xml节点</param>
+        public void FromXml(XmlNode node)
         {
-            this.url = element.SelectToString("./url");
-            this.relativePath = element.SelectToString("./relativePath");
-            this.MD5 = element.SelectToString("./MD5");
-            this.size = element.SelectToLong("./size");
+            this.url = node.SelectToString("./url");
+            this.relativePath = node.SelectToString("./relativePath");
+            this.MD5 = node.SelectToString("./MD5");
+            this.size = node.SelectToLong("./size");
         }
 
         /// <summary>
@@ -67,5 +66,7 @@ namespace Runing.Increment
 
             return node;
         }
+
+        #endregion xml <-> obj
     }
 }

@@ -19,9 +19,9 @@ namespace Runing.Increment
         /// <param name="dirPath">要计算的文件夹</param>
         /// <param name="urlDom">url文件服务器上的路径,形如http://mr.xuexuesoft.com:8010/UpdateFile/</param>
         /// <param name="xmlPath">最后的结果xml文件路径(支持.xml和.zip)</param>
-        static void CreatConfigFileWithXml(string dirPath, string urlDom, string xmlPath)
+        public static void CreatConfigFileWithXml(string dirPath, string urlDom, string xmlPath)
         {
-            FileItems folder = new FileItems();
+            OriginFolder folder = new OriginFolder();
 
             DirectoryInfo di = new DirectoryInfo(dirPath);
             FileInfo[] fis = di.GetFiles("*", SearchOption.AllDirectories);
@@ -29,20 +29,24 @@ namespace Runing.Increment
             {
                 //遍历每一个文件
                 FileInfo fi = fis[i];
-                FileItem fileItem = new FileItem() { url = urlDom, size = fi.Length };
+                FileItem fileItem = new FileItem() { size = fi.Length };
 
                 fileItem.relativePath = FileHelper.Relative(fi.FullName, dirPath);//求这个文件相对路径
+                fileItem.url = urlDom + fileItem.relativePath;
                 fileItem.MD5 = MD5Helper.FileMD5(fi.FullName);//计算md5
 
                 //写到文件夹记录
                 folder.Add(fileItem);
             }
 
-
             var xml = XmlHelper.CreatXml();
             folder.ToXml(xml.DocumentElement);//文件夹内容挂到xml文件的根节点
 
             FileInfo xmlFileInfo = new FileInfo(xmlPath);//要保存的目录
+            if (!xmlFileInfo.Directory.Exists)
+            {
+                Directory.CreateDirectory(xmlFileInfo.Directory.FullName);
+            }
 
             if (xmlFileInfo.Extension == ".zip")//如果是zip那就保存zip文件
             {
@@ -52,7 +56,7 @@ namespace Runing.Increment
                 using (ZipFile zip = new ZipFile(Encoding.Default))
                 {
                     ZipEntry zipEntry = new ZipEntry();
-                    zip.AddEntry(xmlFileInfo.Name, ms.ToArray());//把xml的内存流写到zip文件
+                    zip.AddEntry(xmlFileInfo.Name.Replace(".zip", ".xml"), ms.ToArray());//把xml的内存流写到zip文件
                     zip.Save(xmlFileInfo.FullName);
                 }
             }

@@ -1,22 +1,19 @@
 ﻿using System;
-using System.Collections.Generic;
 using System.IO;
 using System.Xml;
-using System.Xml.Serialization;
 
 namespace Runing.Increment
 {
-
     /// <summary>
     /// 一个简单的自己定义的xml序列化反序列化接口
     /// </summary>
-    interface IXMLSerialize
+    internal interface IXMLSerialize
     {
         /// <summary>
         /// 从一个xml节点对自己的字段赋值
         /// </summary>
-        /// <param name="element">输入的用来读取的xml节点</param>
-        void FromXml(XmlElement element);
+        /// <param name="node">输入的用来读取的xml节点</param>
+        void FromXml(XmlNode node);
 
         /// <summary>
         /// 把自己序列化成xml节点，然后挂在某个父节点上
@@ -24,9 +21,7 @@ namespace Runing.Increment
         /// <param name="parent">要挂上的父节点</param>
         /// <returns>自己的xml节点</returns>
         XmlElement ToXml(XmlElement parent);
-
     }
-
 
     /// <summary>
     /// 一些xml相关的公用方法
@@ -194,6 +189,5 @@ namespace Runing.Increment
             xmlDoc.AppendChild(root);
             return xmlDoc;
         }
-
     }
 }

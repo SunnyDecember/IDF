@@ -1,4 +1,5 @@
 ﻿using System;
+using System.IO;
 using System.Xml;
 
 /*  Author      :   Runing
@@ -8,35 +9,40 @@ using System.Xml;
 
 namespace Runing.Increment
 {
+    /// <summary>
+    /// 增量更新
+    /// </summary>
     public class IDFClient
     {
-        static IDFClient _instance = new IDFClient();
-
-        public static IDFClient Instance
-        {
-            get
-            {
-                return _instance;
-            }
-        }
+        /// <summary>
+        /// 单例
+        /// </summary>
+        public static IDFClient Instance { get; } = new IDFClient();
 
         public IDFClient()
         {
 
         }
 
-
-        public void ReadINI(string iniFilePath)
+        /// <summary>
+        /// 开始异步下载资源
+        /// </summary>
+        /// <param name="xmlServerURL">服务器的XML路径</param>
+        /// <param name="tempFolderPath">临时保存的路径</param>
+        /// <param name="targetFolderPath">需要被替换的文件路径</param>
+        public UpdateTask Go(string xmlServerURL, string tempFolderPath, string targetFolderPath)
         {
-            //设置 xml 文件 url
-            
-            //设置本地下载缓存路径
-        }
+            var ls = new LocalSetting() { tempFolderPath = tempFolderPath, targetFolderPath = targetFolderPath, xmlUrl = xmlServerURL };
 
-        public void Go( )
-        {
-            UpdateTask updateTask = new UpdateTask();
-         
+            DirectoryInfo dif = new DirectoryInfo(ls.targetFolderPath);
+            ls.targetFolderPath = dif.FullName;//确保转换成完整路径
+            dif = new DirectoryInfo(ls.tempFolderPath);
+            ls.tempFolderPath = dif.FullName;//确保转换成完整路径
+
+            UpdateTask updateTask = new UpdateTask(ls);
+            updateTask.DownLoad();
+
+            return updateTask;
         }
     }
 }

@@ -55,11 +55,11 @@
     <Compile Include="Common\Log.cs" />
     <Compile Include="Common\XmlHelper.cs" />
     <Compile Include="Common\Zip3Party.cs" />
-    <Compile Include="Data\Client\FileItemClient.cs" />
-    <Compile Include="Data\DownloadFile.cs" />
-    <Compile Include="Data\DownloadFiles.cs" />
-    <Compile Include="Data\Server\FileItem.cs" />
-    <Compile Include="Data\Server\FileItems.cs" />
+    <Compile Include="Data\Local\LocalFileItem.cs" />
+    <Compile Include="Data\Local\LocalFolder.cs" />
+    <Compile Include="Data\Local\LocalSetting.cs" />
+    <Compile Include="Data\Origin\FileItem.cs" />
+    <Compile Include="Data\Origin\OriginFolder.cs" />
     <Compile Include="IDFHelper.cs" />
     <Compile Include="IDFClient.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
