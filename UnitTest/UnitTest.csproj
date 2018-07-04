@@ -38,9 +38,6 @@
     <WarningLevel>4</WarningLevel>
   </PropertyGroup>
   <ItemGroup>
-    <Reference Include="JumpKick.HttpLib, Version=2.0.16.77, Culture=neutral, processorArchitecture=MSIL">
-      <HintPath>..\packages\HttpLib.2.0.16.77\lib\net45\JumpKick.HttpLib.dll</HintPath>
-    </Reference>
     <Reference Include="Microsoft.VisualStudio.TestPlatform.TestFramework, Version=14.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a, processorArchitecture=MSIL">
       <HintPath>..\packages\MSTest.TestFramework.1.2.1\lib\net45\Microsoft.VisualStudio.TestPlatform.TestFramework.dll</HintPath>
     </Reference>
@@ -63,6 +60,10 @@
     <None Include="packages.config" />
   </ItemGroup>
   <ItemGroup>
+    <ProjectReference Include="..\httplib\JumpKick.HttpLib\JumpKick.HttpLib\JumpKick.HttpLib.csproj">
+      <Project>{d626c4ec-d793-4541-8631-1af678a29490}</Project>
+      <Name>JumpKick.HttpLib</Name>
+    </ProjectReference>
     <ProjectReference Include="..\IDF\IDF.csproj">
       <Project>{f5e4b887-3388-412b-926f-5e12632f2e94}</Project>
       <Name>IDF</Name>

@@ -4,3 +4,6 @@
 [submodule "DFile"]
 	path = DFile
 	url = git@github.com:daixian/DFile.git
+[submodule "httplib"]
+	path = httplib
+	url = git@github.com:daixian/httplib.git

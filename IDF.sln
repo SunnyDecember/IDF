@@ -7,6 +7,8 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "IDF", "IDF\IDF.csproj", "{F
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "UnitTest", "UnitTest\UnitTest.csproj", "{11164213-D327-4092-9095-B1A5988A022E}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "JumpKick.HttpLib", "httplib\JumpKick.HttpLib\JumpKick.HttpLib\JumpKick.HttpLib.csproj", "{D626C4EC-D793-4541-8631-1AF678A29490}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -21,6 +23,10 @@ Global
 		{11164213-D327-4092-9095-B1A5988A022E}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{11164213-D327-4092-9095-B1A5988A022E}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{11164213-D327-4092-9095-B1A5988A022E}.Release|Any CPU.Build.0 = Release|Any CPU
+		{D626C4EC-D793-4541-8631-1AF678A29490}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{D626C4EC-D793-4541-8631-1AF678A29490}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{D626C4EC-D793-4541-8631-1AF678A29490}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{D626C4EC-D793-4541-8631-1AF678A29490}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

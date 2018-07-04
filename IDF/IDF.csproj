@@ -36,9 +36,6 @@
     <Reference Include="Ionic.Zip.Unity">
       <HintPath>..\dotnetzip-for-unity\Binaries\Release\Ionic.Zip.Unity.dll</HintPath>
     </Reference>
-    <Reference Include="JumpKick.HttpLib, Version=2.0.16.77, Culture=neutral, processorArchitecture=MSIL">
-      <HintPath>..\packages\HttpLib.2.0.16.77\lib\net45\JumpKick.HttpLib.dll</HintPath>
-    </Reference>
     <Reference Include="System" />
     <Reference Include="System.Core" />
     <Reference Include="System.Xml.Linq" />
@@ -66,7 +63,10 @@
     <Compile Include="Logic\UpdateTask.cs" />
   </ItemGroup>
   <ItemGroup>
-    <None Include="packages.config" />
+    <ProjectReference Include="..\httplib\JumpKick.HttpLib\JumpKick.HttpLib\JumpKick.HttpLib.csproj">
+      <Project>{d626c4ec-d793-4541-8631-1af678a29490}</Project>
+      <Name>JumpKick.HttpLib</Name>
+    </ProjectReference>
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
 </Project>

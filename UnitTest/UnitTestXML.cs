@@ -41,12 +41,24 @@ namespace UnitTest
             }
         }
 
-
+        /// <summary>
+        /// 自带的DownloadTo方法的测试（如果路径上的文件已经被占用，那么就一直卡住）
+        /// </summary>
         [TestMethod]
-        public void TestMethod1()
+        public void TestMethodDownloadTo()
         {
             string url = "http://127.0.0.1:22333/Debug/Ionic.Zip.Unity.dll";
-            string file = @"E:\work_projects\IDF\UnitTest\bin\test\Temp\Ionic.Zip.Unity.dll";
+            string file = @"../test/Temp/Ionic.Zip.Unity.dll";
+            FileInfo fi = new FileInfo(file);
+            file = fi.FullName;
+            if (!fi.Directory.Exists)
+            {
+                Directory.CreateDirectory(fi.Directory.FullName);
+            }
+            if (fi.Exists)
+            {
+                File.Delete(fi.FullName);
+            }
 
             bool isDone = false;
             Http.Get(url).DownloadTo(file, (bytesCopied, totalBytes) =>
@@ -63,8 +75,16 @@ namespace UnitTest
              }).OnFail((e) =>
              {
                  Console.WriteLine("UnitTestXML.TestMethod1():错误！");
+                 isDone = true;//完成
+             })
+             //.OnSuccess((WebHeaderCollection a, Stream b) => //不能加这个，加了则会卡死
+             //{
+             //    b.ReadTimeout = 1000;
+             //})
+             .OnFail((e) =>
+             {
+                 isDone = true;//完成
              }).Go();
-
 
             while (!isDone)
             {
@@ -95,20 +115,28 @@ namespace UnitTest
         public void TestMethod2()
         {
             string url = "http://127.0.0.1:22333/Debug/Ionic.Zip.Unity.dll";
-            string file = @"E:\work_projects\IDF\UnitTest\bin\test\Temp\Ionic.Zip.Unity.dll";
+            string file = @"../test/Temp/Ionic.Zip.Unity.dll";
+            FileInfo fi = new FileInfo(file);
+            file = fi.FullName;
+            if (!fi.Directory.Exists)
+            {
+                Directory.CreateDirectory(fi.Directory.FullName);
+            }
 
             bool isDone = false;
             Http.Get(url).OnSuccess((WebHeaderCollection a, Stream s) =>
             {
                 FileStream fs = File.Create(file);
                 CopyStream(s, fs);
-                //fs.Close();
+                fs.Close();
                 isDone = true;
 
-            }).OnFail((e) =>
-            {
-                Console.WriteLine("UnitTestXML.TestMethod1():错误！");
-            }).Go();
+            })
+            //.OnFail((e) =>
+            //{
+            //    Console.WriteLine("UnitTestXML.TestMethod1():错误！");
+            //})
+            .Go();
 
             while (!isDone)
             {
@@ -123,7 +151,7 @@ namespace UnitTest
             Console.WriteLine("UnitTestXML.GenerateXML():生成xml文件");
             IDFHelper.CreatConfigFileWithXml("./", "http://127.0.0.1:22333/Debug/", "../test/IDFTest.zip");
 
-            FileHelper.CleanDirectory("../test/Temp");
+            //FileHelper.CleanDirectory("../test/Temp");
 
             bool isDone = false;
             IDFClient.Instance.Go("http://127.0.0.1:22333/test/IDFTest.zip", "../test/Temp", "../test/Target").OnDownloadSuccess((obj) =>
@@ -133,7 +161,9 @@ namespace UnitTest
 
                 isDone = true;
             })
-            .OnError((e) => { isDone = true; });
+            .OnError((e) => {
+                isDone = true;
+            });
 
             while (!isDone)
             {

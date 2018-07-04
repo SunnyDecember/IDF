@@ -1,14 +1,10 @@
 ﻿using Ionic.Zip;
 using JumpKick.HttpLib;
 using System;
-using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Net;
-using System.Text;
-using System.Threading;
 using System.Threading.Tasks;
-using System.Xml;
 using xuexue.flie;
 
 namespace Runing.Increment
@@ -17,7 +13,6 @@ namespace Runing.Increment
     {
         internal UpdateTask(LocalSetting fcc)
         {
-
             localFolder = new LocalFolder(fcc);
 
             this.fcc = fcc;
@@ -29,13 +24,13 @@ namespace Runing.Increment
         public LocalSetting fcc;
 
         /// <summary>
-        /// 
+        ///
         /// </summary>
         private LocalFolder localFolder;
 
-        event Action<Exception> EventError = null;
+        private event Action<Exception> EventError = null;
 
-        event Action<UpdateTask> EventDownloadSuccess = null;
+        private event Action<UpdateTask> EventDownloadSuccess = null;
 
         public void DownLoad()
         {
@@ -76,7 +71,6 @@ namespace Runing.Increment
                 outstream.Flush();
             }
         }
-
 
         private async Task StartDownLoad()
         {
@@ -164,7 +158,7 @@ namespace Runing.Increment
 
             FileItem fileItem = localFileItem.fileItem;
 
-            if (Directory.Exists(localFileItem.tempFilePath))//如果已经下过一个了
+            if (File.Exists(localFileItem.tempFilePath))//如果已经下过一个了
             {
                 if (MD5Helper.FileMD5(localFileItem.tempFilePath) == localFileItem.fileItem.MD5)
                 {
@@ -181,47 +175,38 @@ namespace Runing.Increment
             }
 
             bool isDone = false;
-            //Http.Get(fileItem.url).DownloadTo(fileItemClient.tempFilePath, onProgressChanged: (bytesCopied, totalBytes) =>
-            //{
-            //    //进度改变
-            //},
-            //onSuccess: (headers) =>
-            //{
-            //    isDone = true;//下载完成
-            //}).OnFail((e) =>
-            //{
-            //    EventError?.Invoke(e);
-            //}).Go();
+            FileStream fs = null;
             try
             {
-            
-                FileStream fs = new FileStream(localFileItem.tempFilePath, FileMode.OpenOrCreate);
-                if (fs.Length > localFileItem.fileItem.size)//说明这个文件肯定是错误的
+                fs = new FileStream(localFileItem.tempFilePath, FileMode.OpenOrCreate);
+                if (fs.Length >= localFileItem.fileItem.size)//说明这个文件肯定是错误的
                 {
                     fs.Close();
                     fs = new FileStream(localFileItem.tempFilePath, FileMode.Create);
                 }
 
-                Dictionary<string, string> headrs = new Dictionary<string, string>();
-                headrs.Add("Range:bytes=", $"{fs.Length}-");
-
-                Http.Get(fileItem.url).Headers(headrs).OnSuccess((WebHeaderCollection collection, Stream stream) =>
-                 {
-                     try
-                     {
-                         fs.Seek(fs.Length, SeekOrigin.Current);
-                         CopyStream(stream, fs);
-                         fs.Close();
-
-                     }
-                     catch (Exception e)
-                     {
-                         EventError?.Invoke(e);
-                     }
-
-                 }).OnFail((e) =>
-             {
-                    EventError?.Invoke(e);
+                Http.Get(fileItem.url).OnMake((req) =>
+                {
+                    req.AddRange(fs.Length);
+                }).OnSuccess((WebHeaderCollection collection, Stream stream) =>
+                {
+                    try
+                    {
+                        fs.Seek(fs.Length, SeekOrigin.Begin);
+                        CopyStream(stream, fs);
+                        fs.Close();
+                    }
+                    catch (Exception e)
+                    {
+                        Log.Error("UpdateTask.DownLoadOneFile():下载异常:" + e.Message);
+                        //EventError?.Invoke(e); //暂时不传出事件了
+                    }
+                    isDone = true;
+                }).OnFail((e) =>
+                {
+                    Log.Error("UpdateTask.DownLoadOneFile():下载异常:" + e.Message);
+                    //EventError?.Invoke(e); //暂时不传出事件了
+                    isDone = true;
                 }).Go();
 
                 while (!isDone)
@@ -231,8 +216,9 @@ namespace Runing.Increment
             }
             catch (Exception e)
             {
-                Log.Error("UpdateTask.DownLoadOneFile():下载一个文件异常:" + e.Message);
-
+                Log.Error("UpdateTask.DownLoadOneFile():下载异常:" + e.Message);
+                if (fs != null)
+                { fs.Close(); }
             }
         }
 
