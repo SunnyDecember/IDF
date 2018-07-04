@@ -185,10 +185,12 @@ namespace Runing.Increment
                     fs = new FileStream(localFileItem.tempFilePath, FileMode.Create);
                 }
 
-                Http.Get(fileItem.url).OnMake((req) =>
+                Http.Get(fileItem.url)
+                .OnMake((req) =>
                 {
-                    req.AddRange(fs.Length);
-                }).OnSuccess((WebHeaderCollection collection, Stream stream) =>
+                    req.AddRange(fs.Length);//设置断点续传
+                })
+                .OnSuccess((WebHeaderCollection collection, Stream stream) =>
                 {
                     try
                     {
@@ -202,7 +204,8 @@ namespace Runing.Increment
                         //EventError?.Invoke(e); //暂时不传出事件了
                     }
                     isDone = true;
-                }).OnFail((e) =>
+                })
+                .OnFail((e) =>
                 {
                     Log.Error("UpdateTask.DownLoadOneFile():下载异常:" + e.Message);
                     //EventError?.Invoke(e); //暂时不传出事件了
