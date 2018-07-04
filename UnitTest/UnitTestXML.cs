@@ -7,7 +7,7 @@ using System.Xml;
 using JumpKick.HttpLib;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 using Runing.Increment;
-using xuexue.flie;
+using xuexue.file;
 
 namespace UnitTest
 {
@@ -169,6 +169,18 @@ namespace UnitTest
             {
                 Thread.Sleep(1000);
             }
+        }
+
+        [TestMethod]
+        public void TestMethodLog()
+        {
+            //输出日志到"即时窗口"，"调试->窗口->即时" 只在调试时有输出，运行没有日志
+            for (int i = 0; i < 100; i++)
+            {
+                Debug.WriteLine("写一个日志！", "info");
+                Thread.Sleep(1);
+            }
+
         }
     }
 }

@@ -1,6 +1,6 @@
 ﻿using System.Collections.Generic;
 using System.IO;
-using xuexue.flie;
+using xuexue.file;
 
 namespace Runing.Increment
 {

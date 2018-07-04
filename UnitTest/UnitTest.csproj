@@ -47,10 +47,6 @@
     <Reference Include="System" />
     <Reference Include="System.Core" />
     <Reference Include="System.Xml" />
-    <Reference Include="xuexue.flie, Version=1.0.0.0, Culture=neutral, processorArchitecture=MSIL">
-      <SpecificVersion>False</SpecificVersion>
-      <HintPath>..\DFile\DFlie\DFlie\bin\Release\xuexue.flie.dll</HintPath>
-    </Reference>
   </ItemGroup>
   <ItemGroup>
     <Compile Include="UnitTestXML.cs" />
@@ -60,6 +56,10 @@
     <None Include="packages.config" />
   </ItemGroup>
   <ItemGroup>
+    <ProjectReference Include="..\DFile\xuexue.file\xuexue.file\xuexue.file.csproj">
+      <Project>{05ffa182-2488-4a6a-bb5d-47a7aa75090a}</Project>
+      <Name>xuexue.file</Name>
+    </ProjectReference>
     <ProjectReference Include="..\httplib\JumpKick.HttpLib\JumpKick.HttpLib\JumpKick.HttpLib.csproj">
       <Project>{d626c4ec-d793-4541-8631-1af678a29490}</Project>
       <Name>JumpKick.HttpLib</Name>

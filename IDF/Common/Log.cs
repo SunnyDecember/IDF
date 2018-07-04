@@ -23,7 +23,7 @@ namespace Runing.Increment
             }
             else
             {
-                Console.WriteLine(msg);//如果没有绑定事件，那么就随便输出一下到控制台算了
+                System.Diagnostics.Debug.WriteLine(msg, "Debug");//如果没有绑定事件，那么就随便输出一下到控制台算了
             }
         }
 
@@ -35,7 +35,7 @@ namespace Runing.Increment
             }
             else
             {
-                Console.WriteLine(msg);//如果没有绑定事件，那么就随便输出一下到控制台算了
+                System.Diagnostics.Debug.WriteLine(msg, "Info");//如果没有绑定事件，那么就随便输出一下到控制台算了
             }
         }
 
@@ -47,7 +47,7 @@ namespace Runing.Increment
             }
             else
             {
-                Console.WriteLine(msg);//如果没有绑定事件，那么就随便输出一下到控制台算了
+                System.Diagnostics.Debug.WriteLine(msg, "Warning");//如果没有绑定事件，那么就随便输出一下到控制台算了
             }
         }
 
@@ -59,7 +59,7 @@ namespace Runing.Increment
             }
             else
             {
-                Console.WriteLine(msg);//如果没有绑定事件，那么就随便输出一下到控制台算了
+                System.Diagnostics.Debug.WriteLine(msg, "Error");//如果没有绑定事件，那么就随便输出一下到控制台算了
             }
         }
     }

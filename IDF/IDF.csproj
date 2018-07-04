@@ -44,9 +44,6 @@
     <Reference Include="System.Data" />
     <Reference Include="System.Net.Http" />
     <Reference Include="System.Xml" />
-    <Reference Include="xuexue.flie">
-      <HintPath>..\DFile\DFlie\DFlie\bin\Release\xuexue.flie.dll</HintPath>
-    </Reference>
   </ItemGroup>
   <ItemGroup>
     <Compile Include="Common\Log.cs" />
@@ -63,6 +60,10 @@
     <Compile Include="Logic\UpdateTask.cs" />
   </ItemGroup>
   <ItemGroup>
+    <ProjectReference Include="..\DFile\xuexue.file\xuexue.file\xuexue.file.csproj">
+      <Project>{05ffa182-2488-4a6a-bb5d-47a7aa75090a}</Project>
+      <Name>xuexue.file</Name>
+    </ProjectReference>
     <ProjectReference Include="..\httplib\JumpKick.HttpLib\JumpKick.HttpLib\JumpKick.HttpLib.csproj">
       <Project>{d626c4ec-d793-4541-8631-1af678a29490}</Project>
       <Name>JumpKick.HttpLib</Name>
