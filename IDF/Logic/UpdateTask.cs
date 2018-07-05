@@ -173,7 +173,7 @@ namespace Runing.Increment
                     continue;
                 }
 
-                if (item.fileItem.MD5 != MD5Helper.FileMD5(item.targetFilePath))
+                if (!MD5Helper.Compare(item.targetFilePath, item.fileItem.MD5, item.fileItem.size))
                 {
                     isCorrect = false;
                     Log.Warning("UpdateTask.CheckTargetFileMD5WithXML(): 目标文件和XML不一致 " + item.targetFilePath);
@@ -376,7 +376,7 @@ namespace Runing.Increment
 
             if (File.Exists(localFileItem.tempFilePath))//如果已经下过一个了
             {
-                if (MD5Helper.FileMD5(localFileItem.tempFilePath) == localFileItem.fileItem.MD5)
+                if (MD5Helper.Compare(localFileItem.tempFilePath, localFileItem.fileItem.MD5, localFileItem.fileItem.size))
                 {
                     //那么这个文件就不需要下载了
                     Log.Info("UpdateTask.DownLoadOneFile():存在一致的临时文件" + localFileItem.fileItem.relativePath);
@@ -407,7 +407,10 @@ namespace Runing.Increment
             try
             {
                 fs = new FileStream(localFileItem.tempFilePath, FileMode.OpenOrCreate);
-                if (fs.Length >= localFileItem.fileItem.size)//说明这个文件肯定是错误的
+                if (localFileItem.fileItem.size - fs.Length > 1024 * 1024 * 2 &&//待下载大小,和已经下载了的大小都超过2M才断点
+                    fs.Length > 1024 * 1024 * 2)
+                { }
+                else
                 {
                     fs.Close();
                     fs = new FileStream(localFileItem.tempFilePath, FileMode.Create);
@@ -478,20 +481,27 @@ namespace Runing.Increment
             {
                 if (item.IsNeedDownload)
                 {
+                    Log.Info($"UpdateTask.CheckTempFileCorrect():检查文件项{item.tempFilePath} -> 需要下载！");
                     if (!File.Exists(item.tempFilePath))
                     {
-                        Log.Info("UpdateTask.CheckTempFileCorrect():检查文件项不存在" + item.tempFilePath);
+                        Log.Info("UpdateTask.CheckTempFileCorrect():错误->检查文件项文件不存在" + item.tempFilePath);
                         isCorrect = false;
+                        break;
                     }
                     else
                     {
-                        if (MD5Helper.FileMD5(item.tempFilePath) != item.fileItem.MD5)//计算当前的MD5，确保文件正确
+                        //计算当前的MD5，确保文件正确
+                        if (!MD5Helper.Compare(item.tempFilePath, item.fileItem.MD5, item.fileItem.size))
                         {
-                            Log.Info("UpdateTask.CheckTempFileCorrect():检查文件项不正确，删除文件" + item.tempFilePath);
+                            Log.Info("UpdateTask.CheckTempFileCorrect():错误->检查文件项不正确，删除文件" + item.tempFilePath);
                             File.Delete(item.tempFilePath);
                             isCorrect = false;
                         }
                     }
+                }
+                else
+                {
+                    Log.Info($"UpdateTask.CheckTempFileCorrect():检查文件项{item.tempFilePath} -> 不需要下载...");
                 }
             }
             if (isCorrect)
