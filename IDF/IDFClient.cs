@@ -1,6 +1,4 @@
-﻿using System;
-using System.IO;
-using System.Xml;
+﻿using System.IO;
 
 /*  Author      :   Runing
  *  Time        :   18.7.3
@@ -21,7 +19,6 @@ namespace Runing.Increment
 
         public IDFClient()
         {
-
         }
 
         /// <summary>
@@ -30,14 +27,23 @@ namespace Runing.Increment
         /// <param name="xmlServerURL">服务器的XML路径</param>
         /// <param name="tempFolderPath">临时保存的路径</param>
         /// <param name="targetFolderPath">需要被替换的文件路径</param>
-        public UpdateTask Go(string xmlServerURL, string tempFolderPath, string targetFolderPath)
+        /// <param name="backupFolderPath">备份的文件夹路径</param>
+        public UpdateTask Go(string xmlServerURL, string tempFolderPath, string targetFolderPath, string backupFolderPath)
         {
-            var ls = new LocalSetting() { tempFolderPath = tempFolderPath, targetFolderPath = targetFolderPath, xmlUrl = xmlServerURL };
+            var ls = new LocalSetting()
+            {
+                tempFolderPath = tempFolderPath,
+                targetFolderPath = targetFolderPath,
+                xmlUrl = xmlServerURL,
+                backupFolderPath = backupFolderPath
+            };
 
             DirectoryInfo dif = new DirectoryInfo(ls.targetFolderPath);
             ls.targetFolderPath = dif.FullName;//确保转换成完整路径
             dif = new DirectoryInfo(ls.tempFolderPath);
             ls.tempFolderPath = dif.FullName;//确保转换成完整路径
+            dif = new DirectoryInfo(ls.backupFolderPath);
+            ls.backupFolderPath = dif.FullName;//确保转换成完整路径
 
             UpdateTask updateTask = new UpdateTask(ls);
             updateTask.DownLoad();
@@ -46,4 +52,3 @@ namespace Runing.Increment
         }
     }
 }
-

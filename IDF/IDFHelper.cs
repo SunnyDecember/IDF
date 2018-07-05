@@ -1,10 +1,7 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
+﻿using Ionic.Zip;
 using System.IO;
+using System.Text;
 using xuexue.file;
-using Ionic.Zip;
 
 namespace Runing.Increment
 {

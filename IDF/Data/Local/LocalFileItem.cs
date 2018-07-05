@@ -3,7 +3,7 @@
     /// <summary>
     /// 本地文件项
     /// </summary>
-    internal class LocalFileItem
+    public class LocalFileItem
     {
         /// <summary>
         /// 原始的文件项
@@ -25,6 +25,16 @@
         /// 本地目标文件路径
         /// </summary>
         public string targetFilePath;
+
+        /// <summary>
+        /// 备份文件夹
+        /// </summary>
+        public string backupFilePath;
+
+        /// <summary>
+        /// 更新前的目标文件md5（如果更新失败，检查还原后所有的文件当前MD5值等于它）
+        /// </summary>
+        public string lastTargetMD5;
 
         //其他客户端使用的进度状态记录
     }

@@ -19,5 +19,10 @@
         /// 配置文件的xml的url
         /// </summary>
         public string xmlUrl;
+
+        /// <summary>
+        /// 备份文件夹
+        /// </summary>
+        public string backupFolderPath;
     }
 }
