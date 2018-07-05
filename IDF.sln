@@ -11,6 +11,8 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "JumpKick.HttpLib", "httplib
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "xuexue.file", "DFile\xuexue.file\xuexue.file\xuexue.file.csproj", "{05FFA182-2488-4A6A-BB5D-47A7AA75090A}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "WindowsFormsTest", "WindowsFormsTest\WindowsFormsTest.csproj", "{A3642C76-7682-4DA4-B3F3-70E37EF24E4C}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -33,6 +35,10 @@ Global
 		{05FFA182-2488-4A6A-BB5D-47A7AA75090A}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{05FFA182-2488-4A6A-BB5D-47A7AA75090A}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{05FFA182-2488-4A6A-BB5D-47A7AA75090A}.Release|Any CPU.Build.0 = Release|Any CPU
+		{A3642C76-7682-4DA4-B3F3-70E37EF24E4C}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{A3642C76-7682-4DA4-B3F3-70E37EF24E4C}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{A3642C76-7682-4DA4-B3F3-70E37EF24E4C}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{A3642C76-7682-4DA4-B3F3-70E37EF24E4C}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

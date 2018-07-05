@@ -9,6 +9,7 @@ using System.Linq;
 using System.Net;
 using System.Threading;
 using xuexue.file;
+using System.Threading.Tasks;
 
 namespace UnitTest
 {
@@ -143,7 +144,7 @@ namespace UnitTest
 
             while (!isDone)
             {
-                Thread.Sleep(1000);
+                Thread.Sleep(50);
             }
         }
 
@@ -192,7 +193,7 @@ namespace UnitTest
 
             while (!isDone)
             {
-                Thread.Sleep(1000);
+                Thread.Sleep(50);
             }
         }
 
@@ -213,6 +214,7 @@ namespace UnitTest
         {
             ResetLog();//重设日志
 
+            //这样调用它没有跳回原来的线程
             Runing.Increment.Log.Info("TestMethodDownload():当前执行线程id=" + Thread.CurrentThread.ManagedThreadId);
 
             Console.WriteLine("UnitTestXML.GenerateXML():生成xml文件");
@@ -236,9 +238,45 @@ namespace UnitTest
 
             while (!isDone)
             {
-                Thread.Sleep(1000);
+                Thread.Sleep(15);
             }
         }
+
+        [TestMethod]
+        public  void TestMethodDownloadAsync()
+        {
+            ResetLog();//重设日志
+            bool isDone = false;
+
+            //使用这个线程它也不会重新跳回原来的线程
+            Task.Run(() =>
+            {
+                Runing.Increment.Log.Info("TestMethodDownload():当前执行线程id=" + Thread.CurrentThread.ManagedThreadId);
+
+                Console.WriteLine("UnitTestXML.GenerateXML():生成xml文件");
+                IDFHelper.CreatConfigFileWithXml("../Debug/", "http://127.0.0.1:22333/Debug/", "../test/IDFTest.zip");
+
+                //FileHelper.CleanDirectory("../test/Temp");
+
+                IDFClient.Instance.Go("http://127.0.0.1:22333/test/IDFTest.zip", "../test/Temp", "../test/Target", "../test/Backup")
+                .OnDownloadSuccess((obj) =>
+                {
+                    Runing.Increment.Log.Info("TestMethodDownload():进入OnDownloadSuccess当前执行线程id=" + Thread.CurrentThread.ManagedThreadId);
+                    isDone = true;
+                })
+                .OnError((e) =>
+                {
+                    Runing.Increment.Log.Info("TestMethodDownload():进入OnError当前执行线程id=" + Thread.CurrentThread.ManagedThreadId);
+
+                    isDone = true;
+                });
+            });
+            while (!isDone)
+            {
+                Thread.Sleep(15);
+            }
+        }
+
 
         [TestMethod]
         public void TestMethodMoveFile()
@@ -272,7 +310,7 @@ namespace UnitTest
 
             while (!isDone)
             {
-                Thread.Sleep(1000);
+                Thread.Sleep(500);
             }
 
             var xml = XmlHelper.CreatXml();
@@ -319,7 +357,7 @@ namespace UnitTest
                     File.Delete(fis[i].FullName);
                 }
             }
-            Thread.Sleep(1000);
+            Thread.Sleep(500);
 
             bool isDone = false;
             IDFClient.Instance.Go("http://127.0.0.1:22333/test/IDFTest.zip", "../test/Temp", "../test/Target", "../test/Backup")
@@ -340,7 +378,7 @@ namespace UnitTest
 
             while (!isDone)
             {
-                Thread.Sleep(1000);
+                Thread.Sleep(50);
             }
 
             var xml = XmlHelper.CreatXml();

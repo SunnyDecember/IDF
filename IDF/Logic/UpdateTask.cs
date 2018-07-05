@@ -486,7 +486,6 @@ namespace Runing.Increment
                     {
                         Log.Info("UpdateTask.CheckTempFileCorrect():错误->检查文件项文件不存在" + item.tempFilePath);
                         isCorrect = false;
-                        break;
                     }
                     else
                     {

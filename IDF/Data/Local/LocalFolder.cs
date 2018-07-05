@@ -55,16 +55,16 @@ namespace Runing.Increment
         {
             foreach (LocalFileItem item in fileItemClientDict.Values)
             {
-                item.lastTargetMD5 = MD5Helper.FileMD5(item.targetFilePath);//记录一下更新前的这个文件的md5
-
-                if (!File.Exists(item.targetFilePath) || item.lastTargetMD5 != item.fileItem.MD5)
+                item.IsNeedDownload = true;//默认标记它需要下载
+                if (File.Exists(item.targetFilePath))
                 {
-                    item.IsNeedDownload = true;//标记它需要下载
+                    item.lastTargetMD5 = MD5Helper.FileMD5(item.targetFilePath);//记录一下更新前的这个文件的md5
+                    if (item.lastTargetMD5 == item.fileItem.MD5)
+                    {
+                        item.IsNeedDownload = false;//只有这一种情况不下载
+                    }
                 }
-                else
-                {
-                    item.IsNeedDownload = false;
-                }
+                //就算是空文件也是要下载的
             }
         }
     }
