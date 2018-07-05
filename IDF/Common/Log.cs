@@ -16,6 +16,14 @@ namespace Runing.Increment
 
         public static event Action<string> EventLogError = null;
 
+        public static void ClearEvent()
+        {
+            EventLogDebug = null;
+            EventLogInfo = null;
+            EventLogWarning = null;
+            EventLogError = null;
+        }
+
         public static void Debug(string msg)
         {
             if (EventLogDebug != null)

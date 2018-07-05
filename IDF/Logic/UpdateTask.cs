@@ -36,13 +36,25 @@ namespace Runing.Increment
 
         private event Action<UpdateTask, bool> EventMoveDone = null;
 
-        public void DownLoad()
+        public UpdateTask OnError(Action<Exception> action)
         {
-            Log.Info("UpdateTask.DownLoad():当前执行线程id=" + Thread.CurrentThread.ManagedThreadId);
-            //开始异步处理
-            StartDownLoad();
-            Log.Info("UpdateTask.DownLoad():当前执行线程id=" + Thread.CurrentThread.ManagedThreadId);
+            EventError += action;
+            return this;
         }
+
+        public UpdateTask OnDownloadSuccess(Action<UpdateTask> action)
+        {
+            EventDownloadSuccess += action;
+            return this;
+        }
+
+        public UpdateTask OnMoveFileDone(Action<UpdateTask, bool> action)
+        {
+            EventMoveDone += action;
+            return this;
+        }
+
+        #region move file
 
         /// <summary>
         /// 从临时文件移动到目标文件
@@ -121,26 +133,6 @@ namespace Runing.Increment
                 Log.Info("UpdataTask.MoveFile(): 移动文件出错，移动后文件和服务器的不一致");
             }
         }
-
-        public UpdateTask OnError(Action<Exception> action)
-        {
-            EventError += action;
-            return this;
-        }
-
-        public UpdateTask OnDownloadSuccess(Action<UpdateTask> action)
-        {
-            EventDownloadSuccess += action;
-            return this;
-        }
-
-        public UpdateTask OnMoveFileDone(Action<UpdateTask, bool> action)
-        {
-            EventMoveDone += action;
-            return this;
-        }
-
-        #region move file
 
         /// <summary>
         /// 对备份前后的目标文件md5比较
@@ -255,6 +247,14 @@ namespace Runing.Increment
 
         #region download file
 
+        public void DownLoad()
+        {
+            Log.Info("UpdateTask.DownLoad():当前执行线程id=" + Thread.CurrentThread.ManagedThreadId);
+            //开始异步处理
+            StartDownLoad();
+            Log.Info("UpdateTask.DownLoad():当前执行线程id=" + Thread.CurrentThread.ManagedThreadId);
+        }
+
         /// <summary>
         /// 拷贝两个流
         /// </summary>
@@ -313,7 +313,6 @@ namespace Runing.Increment
                 localFolder.CheekNeedDownload();
 
                 Interlocked.Increment(ref isDone);//下载xml完成
-
             }).OnFail((e) =>
             {
                 EventError?.Invoke(e);
@@ -324,9 +323,10 @@ namespace Runing.Increment
             //一直卡在这里等待上面的方法执行完成
             while (true)
             {
-                Log.Info("UpdateTask.StartDownLoad():await 之前 当前执行线程id=" + Thread.CurrentThread.ManagedThreadId);
+                Log.Info("UpdateTask.StartDownLoad():await Task.Delay(1)之前 当前执行线程id=" + Thread.CurrentThread.ManagedThreadId);
                 await Task.Delay(1);
                 //await WaitDelay();//这里使用Task.Delay和这个函数都会导致线程改变
+                Log.Info("UpdateTask.StartDownLoad():await Task.Delay(1)之后 当前执行线程id=" + Thread.CurrentThread.ManagedThreadId);
                 if (isDone > 0)
                     break;
             }
@@ -338,7 +338,7 @@ namespace Runing.Increment
                 //遍历每一项下载
                 foreach (var kvp in localFolder.fileItemClientDict)
                 {
-                    DownLoadOneFile(kvp.Value);
+                    await DownLoadOneFile(kvp.Value);
                 }
 
                 if (CheckTempFileCorrect())//如果确定已经下载ok了
@@ -363,7 +363,7 @@ namespace Runing.Increment
         /// </summary>
         /// <param name="localFileItem"></param>
         /// <returns></returns>
-        private async void DownLoadOneFile(LocalFileItem localFileItem)
+        private async Task DownLoadOneFile(LocalFileItem localFileItem)
         {
             Log.Info("UpdateTask.DownLoadOneFile():当前执行线程id=" + Thread.CurrentThread.ManagedThreadId);
 
@@ -424,7 +424,6 @@ namespace Runing.Increment
                     {
                         fs.Seek(fs.Length, SeekOrigin.Begin);
                         CopyStream(stream, fs);
-                        fs.Close();
                         Log.Info("UpdateTask.DownLoadOneFile():下载成功!");
                     }
                     catch (Exception e)
@@ -432,12 +431,15 @@ namespace Runing.Increment
                         Log.Error("UpdateTask.DownLoadOneFile():下载异常:" + e.Message);
                         //EventError?.Invoke(e); //暂时不传出事件了
                     }
-
+                    fs.Close();
                     //isDone = true;
                     Interlocked.Increment(ref isDone);//下载完成
                 })
                 .OnFail((e) =>
                 {
+                    if (fs != null)
+                        fs.Close();
+
                     Log.Error("UpdateTask.DownLoadOneFile():下载异常:" + e.Message);
                     //EventError?.Invoke(e); //暂时不传出事件了
 
@@ -447,7 +449,9 @@ namespace Runing.Increment
 
                 while (true)
                 {
+                    Log.Info("UpdateTask.DownLoadOneFile():await Task.Delay(1)之前 当前执行线程id=" + Thread.CurrentThread.ManagedThreadId);
                     await Task.Delay(1);
+                    Log.Info("UpdateTask.DownLoadOneFile():await Task.Delay(1)之后 当前执行线程id=" + Thread.CurrentThread.ManagedThreadId);
                     //await WaitDelay();
                     if (isDone > 0)
                         break;

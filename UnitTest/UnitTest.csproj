@@ -53,7 +53,10 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
-    <Compile Include="UnitTestXML.cs" />
+    <Compile Include="Log\DQueue.cs" />
+    <Compile Include="Log\DxDebug.cs" />
+    <Compile Include="Log\LogFile.cs" />
+    <Compile Include="UnitTest1.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
   </ItemGroup>
   <ItemGroup>

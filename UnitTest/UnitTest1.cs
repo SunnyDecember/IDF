@@ -13,9 +13,9 @@ using xuexue.file;
 namespace UnitTest
 {
     [TestClass]
-    public class UnitTestXML
+    public class UnitTest1
     {
-        public UnitTestXML()
+        public UnitTest1()
         {
             //构造的时候开启文件服务器
             Process[] prcs = Process.GetProcesses();
@@ -38,8 +38,62 @@ namespace UnitTest
                     psi.WorkingDirectory = fi.DirectoryName;
                     Process.Start(psi);
                 }
+                else
+                {
+                    //联网去自己下一个文件服务器
+                    bool isDone = false;
+                    Http.Get("http://mr.xuexuesoft.com:8010/Other/FileServer.exe").DownloadTo(fi.FullName, (bytesCopied, totalBytes) =>
+                    {
+
+                    }, onSuccess: (headers) =>
+                    {
+                        isDone = true;
+                        ProcessStartInfo psi = new ProcessStartInfo();
+                        psi.FileName = fi.FullName;
+                        psi.WorkingDirectory = fi.DirectoryName;
+                        Process.Start(psi);
+                    }).OnFail((e) =>
+                    {
+                    }).Go();
+
+                    while (!isDone)
+                    {
+                        Thread.Sleep(100);
+                    }
+                }
                 Thread.Sleep(2000);
             }
+
+            //重设线程数
+            ThreadPool.SetMinThreads(32, 32);
+
+            //挂个日志文件输出
+            xuexue.LogFile.GetInst().CreatLogFile("../test/log");
+            xuexue.LogFile.GetInst().isImmediatelyFlush = true;
+            xuexue.DxDebug.IsLogFile = true;
+            xuexue.DxDebug.IsConsole = true;
+
+            //清除日志文件
+            xuexue.LogFile.GetInst().ClearLogFileInFolder("../test/log", 0.1f);
+
+        }
+
+        ~UnitTest1()
+        {
+            Runing.Increment.Log.ClearEvent();
+        }
+
+        /// <summary>
+        /// 重设日志关联
+        /// </summary>
+        private void ResetLog()
+        {
+            Runing.Increment.Log.ClearEvent();
+            Runing.Increment.Log.EventLogInfo += (s)=> { xuexue.DxDebug.LogFileOnly(s); };
+            Runing.Increment.Log.EventLogDebug += (s) => { xuexue.DxDebug.LogFileOnly(s); };
+            Runing.Increment.Log.EventLogWarning += (s) => { xuexue.DxDebug.LogFileOnly(s); };
+            Runing.Increment.Log.EventLogError += (s) => { xuexue.DxDebug.LogFileOnly(s); };
+            ;
         }
 
         /// <summary>
@@ -145,9 +199,11 @@ namespace UnitTest
         [TestMethod]
         public void TestMethodCreatXML()
         {
+            ResetLog();//重设日志
+
             for (int i = 0; i < 20; i++)
             {
-                Console.WriteLine("UnitTestXML.GenerateXML():生成xml文件");
+                Runing.Increment.Log.Info("UnitTest.TestMethodCreatXML():生成xml文件");
                 IDFHelper.CreatConfigFileWithXml("./", "http://127.0.0.1:22333/Debug/", "../test/IDFTest.zip");
             }
         }
@@ -155,6 +211,8 @@ namespace UnitTest
         [TestMethod]
         public void TestMethodDownload()
         {
+            ResetLog();//重设日志
+
             Runing.Increment.Log.Info("TestMethodDownload():当前执行线程id=" + Thread.CurrentThread.ManagedThreadId);
 
             Console.WriteLine("UnitTestXML.GenerateXML():生成xml文件");
@@ -185,7 +243,9 @@ namespace UnitTest
         [TestMethod]
         public void TestMethodMoveFile()
         {
-            Console.WriteLine("UnitTestXML.GenerateXML():生成xml文件");
+            ResetLog();//重设日志
+
+            Runing.Increment.Log.Info("UnitTest1.TestMethodMoveFile():生成xml文件");
             IDFHelper.CreatConfigFileWithXml("./", "http://127.0.0.1:22333/Debug/", "../test/IDFTest.zip");
 
             FileHelper.CleanDirectory("../test/Temp");
@@ -242,7 +302,9 @@ namespace UnitTest
         [TestMethod]
         public void TestMethodMoveFile2()
         {
-            Console.WriteLine("UnitTestXML.GenerateXML():生成xml文件");
+            ResetLog();//重设日志
+
+            Runing.Increment.Log.Info("UnitTest1.TestMethodMoveFile2():生成xml文件");
             IDFHelper.CreatConfigFileWithXml("./", "http://127.0.0.1:22333/Debug/", "../test/IDFTest.zip");
 
             //FileHelper.CleanDirectory("../test/Temp");
@@ -309,10 +371,12 @@ namespace UnitTest
         public void TestMethodLog()
         {
             //Runing.Increment.Log.Warning("这是一个警告");
-
+           // var fs = File.Create("1231.md");
+            //fs.WriteByte(123);
             //输出日志到"即时窗口"，"调试->窗口->即时" 只在调试时有输出，运行没有日志
             for (int i = 0; i < 100; i++)
             {
+                //fs.Close();
                 //Debug.WriteLine("写一个日志！", "info");
                 // Thread.Sleep(1);
             }
