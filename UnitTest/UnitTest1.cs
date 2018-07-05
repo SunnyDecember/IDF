@@ -216,7 +216,7 @@ namespace UnitTest
             Runing.Increment.Log.Info("TestMethodDownload():当前执行线程id=" + Thread.CurrentThread.ManagedThreadId);
 
             Console.WriteLine("UnitTestXML.GenerateXML():生成xml文件");
-            IDFHelper.CreatConfigFileWithXml("./", "http://127.0.0.1:22333/Debug/", "../test/IDFTest.zip");
+            IDFHelper.CreatConfigFileWithXml("../Debug/", "http://127.0.0.1:22333/Debug/", "../test/IDFTest.zip");
 
             //FileHelper.CleanDirectory("../test/Temp");
 
@@ -246,7 +246,7 @@ namespace UnitTest
             ResetLog();//重设日志
 
             Runing.Increment.Log.Info("UnitTest1.TestMethodMoveFile():生成xml文件");
-            IDFHelper.CreatConfigFileWithXml("./", "http://127.0.0.1:22333/Debug/", "../test/IDFTest.zip");
+            IDFHelper.CreatConfigFileWithXml("../Debug/", "http://127.0.0.1:22333/Debug/", "../test/IDFTest.zip");
 
             FileHelper.CleanDirectory("../test/Temp");
             FileHelper.CleanDirectory("../test/Target");
@@ -305,7 +305,7 @@ namespace UnitTest
             ResetLog();//重设日志
 
             Runing.Increment.Log.Info("UnitTest1.TestMethodMoveFile2():生成xml文件");
-            IDFHelper.CreatConfigFileWithXml("./", "http://127.0.0.1:22333/Debug/", "../test/IDFTest.zip");
+            IDFHelper.CreatConfigFileWithXml("../Debug/", "http://127.0.0.1:22333/Debug/", "../test/IDFTest.zip");
 
             //FileHelper.CleanDirectory("../test/Temp");
             //FileHelper.CleanDirectory("../test/Target");
