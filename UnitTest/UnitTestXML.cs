@@ -1,12 +1,13 @@
-﻿using System;
-using System.Diagnostics;
-using System.IO;
-using System.Net;
-using System.Threading;
-using System.Xml;
+﻿using Ionic.Zip;
 using JumpKick.HttpLib;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 using Runing.Increment;
+using System;
+using System.Diagnostics;
+using System.IO;
+using System.Linq;
+using System.Net;
+using System.Threading;
 using xuexue.file;
 
 namespace UnitTest
@@ -90,7 +91,6 @@ namespace UnitTest
             {
                 Thread.Sleep(1000);
             }
-
         }
 
         /// <summary>
@@ -109,7 +109,6 @@ namespace UnitTest
                 outstream.Flush();
             }
         }
-
 
         [TestMethod]
         public void TestMethod2()
@@ -130,7 +129,6 @@ namespace UnitTest
                 CopyStream(s, fs);
                 fs.Close();
                 isDone = true;
-
             })
             //.OnFail((e) =>
             //{
@@ -144,24 +142,37 @@ namespace UnitTest
             }
         }
 
+        [TestMethod]
+        public void TestMethodCreatXML()
+        {
+            for (int i = 0; i < 20; i++)
+            {
+                Console.WriteLine("UnitTestXML.GenerateXML():生成xml文件");
+                IDFHelper.CreatConfigFileWithXml("./", "http://127.0.0.1:22333/Debug/", "../test/IDFTest.zip");
+            }
+        }
 
         [TestMethod]
-        public void GenerateXML()
+        public void TestMethodDownload()
         {
+            Runing.Increment.Log.Info("TestMethodDownload():当前执行线程id=" + Thread.CurrentThread.ManagedThreadId);
+
             Console.WriteLine("UnitTestXML.GenerateXML():生成xml文件");
             IDFHelper.CreatConfigFileWithXml("./", "http://127.0.0.1:22333/Debug/", "../test/IDFTest.zip");
 
             //FileHelper.CleanDirectory("../test/Temp");
 
             bool isDone = false;
-            IDFClient.Instance.Go("http://127.0.0.1:22333/test/IDFTest.zip", "../test/Temp", "../test/Target").OnDownloadSuccess((obj) =>
+            IDFClient.Instance.Go("http://127.0.0.1:22333/test/IDFTest.zip", "../test/Temp", "../test/Target", "../test/Backup")
+            .OnDownloadSuccess((obj) =>
             {
-                //关闭那些程序
-                obj.MoveFile();
-
+                Runing.Increment.Log.Info("TestMethodDownload():进入OnDownloadSuccess当前执行线程id=" + Thread.CurrentThread.ManagedThreadId);
                 isDone = true;
             })
-            .OnError((e) => {
+            .OnError((e) =>
+            {
+                Runing.Increment.Log.Info("TestMethodDownload():进入OnError当前执行线程id=" + Thread.CurrentThread.ManagedThreadId);
+
                 isDone = true;
             });
 
@@ -172,15 +183,139 @@ namespace UnitTest
         }
 
         [TestMethod]
+        public void TestMethodMoveFile()
+        {
+            Console.WriteLine("UnitTestXML.GenerateXML():生成xml文件");
+            IDFHelper.CreatConfigFileWithXml("./", "http://127.0.0.1:22333/Debug/", "../test/IDFTest.zip");
+
+            FileHelper.CleanDirectory("../test/Temp");
+            FileHelper.CleanDirectory("../test/Target");
+            FileHelper.CleanDirectory("../test/Backup");
+            Thread.Sleep(1000);
+
+            bool isDone = false;
+            IDFClient.Instance.Go("http://127.0.0.1:22333/test/IDFTest.zip", "../test/Temp", "../test/Target", "../test/Backup")
+            .OnMoveFileDone((obj, success) =>
+            {
+                Runing.Increment.Log.Info("移动文件成功后回调");
+                isDone = true;
+            })
+            .OnDownloadSuccess((obj) =>
+            {
+                //关闭那些程序
+                obj.MoveFile();
+            })
+            .OnError((e) =>
+            {
+                isDone = true;
+            });
+
+            while (!isDone)
+            {
+                Thread.Sleep(1000);
+            }
+
+            var xml = XmlHelper.CreatXml();
+
+            var fs = File.Open(new FileInfo("../test/IDFTest.zip").FullName, FileMode.Open, FileAccess.Read);
+            ZipFile zip = ZipFile.Read(fs);
+            ZipEntry ze = zip.Entries.First();//第一个实体
+            MemoryStream xmlms = new MemoryStream();
+            ze.Extract(xmlms);
+            xmlms.Position = 0;
+            xml.Load(xmlms); //从下载文件流中读xml
+            OriginFolder fis = new OriginFolder();
+            var node = xml.DocumentElement.SelectSingleNode("./" + typeof(OriginFolder).Name);
+            fis.FromXml(node);//从xml文件根节点反序列化
+            fs.Close();
+
+            int index = 0;
+            foreach (var item in fis.fileItemDict.Values)
+            {
+                index++;
+                Runing.Increment.Log.Info($"测试{index}:测试校验文件" + item.relativePath);
+                string itemTarFilePath = Path.Combine(new DirectoryInfo("../test/Target").FullName, item.relativePath);
+                Assert.IsTrue(MD5Helper.FileMD5(itemTarFilePath) == item.MD5);
+            }
+        }
+
+        [TestMethod]
+        public void TestMethodMoveFile2()
+        {
+            Console.WriteLine("UnitTestXML.GenerateXML():生成xml文件");
+            IDFHelper.CreatConfigFileWithXml("./", "http://127.0.0.1:22333/Debug/", "../test/IDFTest.zip");
+
+            //FileHelper.CleanDirectory("../test/Temp");
+            //FileHelper.CleanDirectory("../test/Target");
+            //FileHelper.CleanDirectory("../test/Backup");
+
+            FileInfo[] fis = new DirectoryInfo("../test/Target").GetFiles("*.*", SearchOption.AllDirectories);
+            for (int i = 0; i < fis.Length; i++)
+            {
+                if (i % 2 == 0)
+                {
+                    File.Delete(fis[i].FullName);
+                }
+            }
+            Thread.Sleep(1000);
+
+            bool isDone = false;
+            IDFClient.Instance.Go("http://127.0.0.1:22333/test/IDFTest.zip", "../test/Temp", "../test/Target", "../test/Backup")
+            .OnMoveFileDone((obj, success) =>
+            {
+                Runing.Increment.Log.Info("移动文件成功后回调");
+                isDone = true;
+            })
+            .OnDownloadSuccess((obj) =>
+            {
+                //关闭那些程序
+                obj.MoveFile();
+            })
+            .OnError((e) =>
+            {
+                isDone = true;
+            });
+
+            while (!isDone)
+            {
+                Thread.Sleep(1000);
+            }
+
+            var xml = XmlHelper.CreatXml();
+
+            var fs = File.Open(new FileInfo("../test/IDFTest.zip").FullName, FileMode.Open, FileAccess.Read);
+            ZipFile zip = ZipFile.Read(fs);
+            ZipEntry ze = zip.Entries.First();//第一个实体
+            MemoryStream xmlms = new MemoryStream();
+            ze.Extract(xmlms);
+            xmlms.Position = 0;
+            xml.Load(xmlms); //从下载文件流中读xml
+            OriginFolder originFolder = new OriginFolder();
+            var node = xml.DocumentElement.SelectSingleNode("./" + typeof(OriginFolder).Name);
+            originFolder.FromXml(node);//从xml文件根节点反序列化
+            fs.Close();
+
+            int index = 0;
+            foreach (var item in originFolder.fileItemDict.Values)
+            {
+                index++;
+                Runing.Increment.Log.Info($"测试{index}:测试校验文件" + item.relativePath);
+                string itemTarFilePath = Path.Combine(new DirectoryInfo("../test/Target").FullName, item.relativePath);
+                Assert.IsTrue(MD5Helper.FileMD5(itemTarFilePath) == item.MD5);
+            }
+        }
+
+        [TestMethod]
         public void TestMethodLog()
         {
+            //Runing.Increment.Log.Warning("这是一个警告");
+
             //输出日志到"即时窗口"，"调试->窗口->即时" 只在调试时有输出，运行没有日志
             for (int i = 0; i < 100; i++)
             {
-                Debug.WriteLine("写一个日志！", "info");
-                Thread.Sleep(1);
+                //Debug.WriteLine("写一个日志！", "info");
+                // Thread.Sleep(1);
             }
-
         }
     }
 }

@@ -5,7 +5,7 @@ namespace Runing.Increment
     /// <summary>
     /// 原始文件项
     /// </summary>
-    internal class FileItem
+    public class FileItem
     {
         /// <summary>
         /// 服务器的目录

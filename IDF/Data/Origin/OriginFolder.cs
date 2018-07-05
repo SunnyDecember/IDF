@@ -6,7 +6,7 @@ namespace Runing.Increment
     /// <summary>
     /// 原始文件夹内容
     /// </summary>
-    internal class OriginFolder : IXMLSerialize
+    public class OriginFolder : IXMLSerialize
     {
         /// <summary>
         /// key:文件的相对路径

@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Diagnostics;
 
 namespace Runing.Increment
 {
@@ -48,6 +49,17 @@ namespace Runing.Increment
             else
             {
                 System.Diagnostics.Debug.WriteLine(msg, "Warning");//如果没有绑定事件，那么就随便输出一下到控制台算了
+                System.Diagnostics.Debug.Write($"StackTrace:");
+                StackTrace st = new StackTrace(true);
+                StackFrame[] sfs = st.GetFrames();
+                int showLineNum = 6 < sfs.Length ? 6 : sfs.Length;
+                for (int i = 1; i < showLineNum; i++)//因为最上一行就是这个函数，所以从i=1开始
+                {
+                    if (string.IsNullOrEmpty(sfs[i].GetFileName()))
+                        System.Diagnostics.Debug.WriteLine($"{sfs[i].GetMethod()}");
+                    else
+                        System.Diagnostics.Debug.WriteLine($"{sfs[i].GetFileName()}.{sfs[i].GetMethod()}:line{sfs[i].GetFileLineNumber()}");
+                }
             }
         }
 
@@ -60,6 +72,17 @@ namespace Runing.Increment
             else
             {
                 System.Diagnostics.Debug.WriteLine(msg, "Error");//如果没有绑定事件，那么就随便输出一下到控制台算了
+                System.Diagnostics.Debug.Write($"StackTrace:");
+                StackTrace st = new StackTrace(true);
+                StackFrame[] sfs = st.GetFrames();
+                int showLineNum = 6 < sfs.Length ? 6 : sfs.Length;
+                for (int i = 1; i < showLineNum; i++)//因为最上一行就是这个函数，所以从i=1开始
+                {
+                    if (string.IsNullOrEmpty(sfs[i].GetFileName()))
+                        System.Diagnostics.Debug.WriteLine($"{sfs[i].GetMethod()}");
+                    else
+                        System.Diagnostics.Debug.WriteLine($"{sfs[i].GetFileName()}.{sfs[i].GetMethod()}:line{sfs[i].GetFileLineNumber()}");
+                }
             }
         }
     }

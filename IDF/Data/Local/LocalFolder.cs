@@ -1,4 +1,5 @@
-﻿using System.Collections.Generic;
+﻿using System.Collections.Concurrent;
+using System.Collections.Generic;
 using System.IO;
 using xuexue.file;
 
@@ -29,18 +30,19 @@ namespace Runing.Increment
         /// 使用一个服务器上下下来的FolderConfig,加上本地配置LocalSetting。
         /// 初始化自己的整个内容
         /// </summary>
-        /// <param name="folderConfig"></param>
-        public void InitWithFolderConfig(OriginFolder folderConfig)
+        /// <param name="fileItemDict"></param>
+        public void InitWithFolderConfig(ConcurrentDictionary<string, FileItem> fileItemDict)
         {
             //先clear
             fileItemClientDict.Clear();
 
-            foreach (var fileItem in folderConfig.fileItemDict.Values)
+            foreach (var fileItem in fileItemDict.Values)
             {
                 LocalFileItem fic = new LocalFileItem();
                 fic.fileItem = fileItem;
                 fic.tempFilePath = Path.Combine(localSetting.tempFolderPath, fic.fileItem.relativePath);
                 fic.targetFilePath = Path.Combine(localSetting.targetFolderPath, fic.fileItem.relativePath);
+                fic.backupFilePath = Path.Combine(localSetting.backupFolderPath, fic.fileItem.relativePath);
 
                 fileItemClientDict.Add(fic.fileItem.relativePath, fic);
             }
@@ -53,7 +55,9 @@ namespace Runing.Increment
         {
             foreach (LocalFileItem item in fileItemClientDict.Values)
             {
-                if (!File.Exists(item.targetFilePath) || MD5Helper.FileMD5(item.targetFilePath) != item.fileItem.MD5)
+                item.lastTargetMD5 = MD5Helper.FileMD5(item.targetFilePath);//记录一下更新前的这个文件的md5
+
+                if (!File.Exists(item.targetFilePath) || item.lastTargetMD5 != item.fileItem.MD5)
                 {
                     item.IsNeedDownload = true;//标记它需要下载
                 }
