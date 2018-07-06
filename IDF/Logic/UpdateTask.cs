@@ -11,6 +11,9 @@ using xuexue.file;
 
 namespace Runing.Increment
 {
+    /// <summary>
+    /// 一个更新任务对象,IDFClient中会创建它。
+    /// </summary>
     public class UpdateTask
     {
         internal UpdateTask(LocalSetting fcc)
@@ -21,7 +24,7 @@ namespace Runing.Increment
         }
 
         /// <summary>
-        /// 本地设置的一个记录
+        /// 本地设置的一个记录，它记录了用户设置的临时文件夹位置，目标文件夹位置，备份文件夹位置等等。
         /// </summary>
         public LocalSetting fcc;
 
@@ -36,7 +39,7 @@ namespace Runing.Increment
         private List<LocalFileItem> hasMoveFileList = new List<LocalFileItem>();
 
         /// <summary>
-        ///
+        /// 本地文件夹数据，它对应一个OriginFolder数据
         /// </summary>
         private LocalFolder localFolder;
 
@@ -46,18 +49,34 @@ namespace Runing.Increment
 
         private event Action<UpdateTask, bool> EventMoveDone = null;
 
+        /// <summary>
+        /// 增量更新过程中出现了错误,参数是传出来一个Exception。
+        /// </summary>
+        /// <param name="action"></param>
+        /// <returns></returns>
         public UpdateTask OnError(Action<Exception> action)
         {
             EventError += action;
             return this;
         }
 
+        /// <summary>
+        /// 设置下载到临时文件全部成功，这里可以开始移动文件了。
+        /// </summary>
+        /// <param name="action"></param>
+        /// <returns></returns>
         public UpdateTask OnDownloadSuccess(Action<UpdateTask> action)
         {
             EventDownloadSuccess += action;
             return this;
         }
 
+        /// <summary>
+        /// 设置移动文件结束的回调函数，移动结束可能仍然是失败的。
+        ///  其中Action的第二个参数bool，如果移动成功返回true，发生错误返回false。
+        /// </summary>
+        /// <param name="action">回调委托，bool表示是否发生错误</param>
+        /// <returns></returns>
         public UpdateTask OnMoveFileDone(Action<UpdateTask, bool> action)
         {
             EventMoveDone += action;
@@ -150,17 +169,17 @@ namespace Runing.Increment
             if (null != EventMoveDone)
                 EventMoveDone(this, false);
 
-            if (CheckMD5WithBeforeAfterTargetFile())
+            if (CheckTargetFileMD5BeforeAfter())
             {
-                Log.Info("UpdataTask.MoveFile(): 备份前后的文件MD5一致");
+                Log.Info("UpdataTask.OnException(): 备份前后的文件MD5一致");
             }
         }
 
         /// <summary>
-        /// 对备份前后的目标文件md5比较
+        /// 用整个更新操作前后的目标文件md5比较,确保整个操作前后的文件一致。
         /// </summary>
         /// <returns></returns>
-        public bool CheckMD5WithBeforeAfterTargetFile()
+        public bool CheckTargetFileMD5BeforeAfter()
         {
             bool isCorrect = true;
             foreach (var item in localFolder.fileItemClientDict.Values)
@@ -173,7 +192,7 @@ namespace Runing.Increment
                 if (item.lastTargetMD5 != MD5Helper.FileMD5(item.targetFilePath))
                 {
                     isCorrect = false;
-                    Log.Warning("UpdateTask.CompareMD5WithFrontBackTargetFile(): 备份前目标文件和恢复后的MD5不一致 " + item.targetFilePath);
+                    Log.Error("UpdateTask.CheckTargetFileMD5BeforeAfter(): 操作前目标文件和恢复后的MD5不一致 " + item.targetFilePath);
                 }
             }
 
@@ -283,34 +302,16 @@ namespace Runing.Increment
 
         #region download file
 
-        public void DownLoad()
+        public void Go()
         {
-            Log.Info("UpdateTask.DownLoad():当前执行线程id=" + Thread.CurrentThread.ManagedThreadId);
+            Log.Debug("UpdateTask.Go():当前执行线程id=" + Thread.CurrentThread.ManagedThreadId);
             //开始异步处理
             StartDownLoad();
-            Log.Info("UpdateTask.DownLoad():当前执行线程id=" + Thread.CurrentThread.ManagedThreadId);
-        }
-
-        /// <summary>
-        /// 拷贝两个流
-        /// </summary>
-        /// <param name="instream"></param>
-        /// <param name="outstream"></param>
-        private void CopyStream(Stream instream, Stream outstream)
-        {
-            const int bufferLen = 1024;
-            byte[] buffer = new byte[bufferLen];
-            int count = 0;
-            while ((count = instream.Read(buffer, 0, bufferLen)) > 0)
-            {
-                outstream.Write(buffer, 0, count);
-                outstream.Flush();
-            }
         }
 
         private async void StartDownLoad()
         {
-            Log.Info("UpdateTask.StartDownLoad():当前执行线程id=" + Thread.CurrentThread.ManagedThreadId);
+            Log.Debug("UpdateTask.StartDownLoad():当前执行线程id=" + Thread.CurrentThread.ManagedThreadId);
 
             int isDone = 0;
             Interlocked.Exchange(ref isDone, 0);
@@ -318,58 +319,77 @@ namespace Runing.Increment
             //下载ConfigXML(异步的)
             Http.Get(fcc.xmlUrl).OnSuccess((WebHeaderCollection collection, Stream stream) =>
             {
-                var xml = XmlHelper.CreatXml();
-
-                if (fcc.xmlUrl.EndsWith(".zip"))
+                try
                 {
-                    MemoryStream ms = new MemoryStream();
-                    CopyStream(stream, ms);
+                    var xml = XmlHelper.CreatXml();
 
-                    MemoryStream xmlms = new MemoryStream();
-                    ms.Position = 0;
-                    ZipFile zip = ZipFile.Read(ms);
-                    ZipEntry ze = zip.Entries.First();//第一个实体
-                    ze.Extract(xmlms);
-                    xmlms.Position = 0;
-                    xml.Load(xmlms); //从下载文件流中读xml
+                    if (fcc.xmlUrl.EndsWith(".zip"))
+                    {
+                        MemoryStream ms = new MemoryStream();
+                        CopyStream(stream, ms);
+
+                        MemoryStream xmlms = new MemoryStream();
+                        ms.Position = 0;
+                        ZipFile zip = ZipFile.Read(ms);
+                        ZipEntry ze = zip.Entries.First();//第一个实体
+                        ze.Extract(xmlms);
+                        xmlms.Position = 0;
+                        xml.Load(xmlms); //从下载文件流中读xml
+                    }
+                    else
+                    {
+                        xml.Load(stream); //从下载文件流中读xml
+                    }
+                    Log.Info("UpdateTask.StartDownLoad():下载xml成功!");
+                    OriginFolder fis = new OriginFolder();
+                    var node = xml.DocumentElement.SelectSingleNode("./" + typeof(OriginFolder).Name);
+                    fis.FromXml(node);//从xml文件根节点反序列化
+
+                    //使用服务器上下载下来的来初始化客户端的
+                    localFolder.InitWithFolderConfig(fis.fileItemDict);
+
+                    //检查本地哪些文件需要下载
+                    localFolder.CheekNeedDownload();
+
+                    Interlocked.Increment(ref isDone);//标记为1，下载xml完成
                 }
-                else
+                catch (Exception e)
                 {
-                    xml.Load(stream); //从下载文件流中读xml
+                    Log.Error($"UpdateTask.StartDownLoad():下载xml异常,{fcc.xmlUrl} - " + e.Message);
+                    try
+                    {
+                        EventError?.Invoke(e);
+                    }
+                    catch (Exception ex)
+                    {
+                        Log.Error("UpdateTask.StartDownLoad():执行用户事件EventError异常:" + ex.Message);
+                    }
+                    Interlocked.Decrement(ref isDone);//也标记它非零了, -1
                 }
-
-                OriginFolder fis = new OriginFolder();
-                var node = xml.DocumentElement.SelectSingleNode("./" + typeof(OriginFolder).Name);
-                fis.FromXml(node);//从xml文件根节点反序列化
-
-                //使用服务器上下载下来的来初始化客户端的
-                localFolder.InitWithFolderConfig(fis.fileItemDict);
-
-                //检查本地哪些文件需要下载
-                localFolder.CheekNeedDownload();
-
-                Interlocked.Increment(ref isDone);//下载xml完成
             }).OnFail((e) =>
             {
-                EventError?.Invoke(e);
+                Log.Warning($"UpdateTask.StartDownLoad():OnFail()下载xml失败,{fcc.xmlUrl} - " + e.Message);
+                try { EventError?.Invoke(e); }
+                catch (Exception ex) { Log.Warning("UpdateTask.StartDownLoad():执行用户事件EventError异常:" + ex.Message); }
+                Interlocked.Decrement(ref isDone);//也标记它非零了, -1
             }).Go();
-
-            Log.Info("UpdateTask.StartDownLoad():等待xml文件下载ok，当前执行线程id=" + Thread.CurrentThread.ManagedThreadId);
 
             //一直卡在这里等待上面的方法执行完成
             while (true)
             {
-                Log.Info("UpdateTask.StartDownLoad():await Task.Delay(1)之前 当前执行线程id=" + Thread.CurrentThread.ManagedThreadId);
+                Log.Debug("UpdateTask.StartDownLoad():await Task.Delay(1)之前 当前执行线程id=" + Thread.CurrentThread.ManagedThreadId);
                 await Task.Delay(1);
                 //await WaitDelay();//这里使用Task.Delay和这个函数都会导致线程改变
-                Log.Info("UpdateTask.StartDownLoad():await Task.Delay(1)之后 当前执行线程id=" + Thread.CurrentThread.ManagedThreadId);
+                Log.Debug("UpdateTask.StartDownLoad():await Task.Delay(1)之后 当前执行线程id=" + Thread.CurrentThread.ManagedThreadId);
                 if (isDone > 0)
                     break;
+
+                if (isDone < 0)
+                    return;//这里下载xml失败了，那这个函数不需要往下走了
             }
 
-            Log.Info("UpdateTask.StartDownLoad():xml文件下载完成，当前执行线程id=" + Thread.CurrentThread.ManagedThreadId);
-
-            while (true)
+            int errorCount = 0;
+            while (errorCount < 5)//只重试5次
             {
                 //遍历每一项下载
                 foreach (var kvp in localFolder.fileItemClientDict)
@@ -381,6 +401,7 @@ namespace Runing.Increment
                 {
                     break;
                 }
+                errorCount++;
             }
 
             //执行下载完成事件
@@ -401,8 +422,6 @@ namespace Runing.Increment
         /// <returns></returns>
         private async Task DownLoadOneFile(LocalFileItem localFileItem)
         {
-            Log.Info("UpdateTask.DownLoadOneFile():当前执行线程id=" + Thread.CurrentThread.ManagedThreadId);
-
             if (!localFileItem.IsNeedDownload)//之前的MD5比对不需要下载就不下了
             {
                 return;
@@ -486,9 +505,9 @@ namespace Runing.Increment
 
                 while (true)
                 {
-                    Log.Info("UpdateTask.DownLoadOneFile():await Task.Delay(1)之前 当前执行线程id=" + Thread.CurrentThread.ManagedThreadId);
+                    Log.Debug("UpdateTask.DownLoadOneFile():await Task.Delay(1)之前 当前执行线程id=" + Thread.CurrentThread.ManagedThreadId);
                     await Task.Delay(1);
-                    Log.Info("UpdateTask.DownLoadOneFile():await Task.Delay(1)之后 当前执行线程id=" + Thread.CurrentThread.ManagedThreadId);
+                    Log.Debug("UpdateTask.DownLoadOneFile():await Task.Delay(1)之后 当前执行线程id=" + Thread.CurrentThread.ManagedThreadId);
                     //await WaitDelay();
                     if (isDone > 0)
                         break;
@@ -510,8 +529,6 @@ namespace Runing.Increment
         /// <returns></returns>
         private bool CheckTempFileCorrect()
         {
-            Log.Info("UpdateTask.CheckTempFileCorrect():当前执行线程id=" + Thread.CurrentThread.ManagedThreadId);
-
             bool isCorrect = true;
             foreach (var item in localFolder.fileItemClientDict.Values)
             {
@@ -544,6 +561,23 @@ namespace Runing.Increment
             else
                 Log.Info("UpdateTask.CheckTempFileCorrect():继续下载未完成的文件...");
             return isCorrect;
+        }
+
+        /// <summary>
+        /// 拷贝两个流
+        /// </summary>
+        /// <param name="instream"></param>
+        /// <param name="outstream"></param>
+        private void CopyStream(Stream instream, Stream outstream)
+        {
+            const int bufferLen = 1024;
+            byte[] buffer = new byte[bufferLen];
+            int count = 0;
+            while ((count = instream.Read(buffer, 0, bufferLen)) > 0)
+            {
+                outstream.Write(buffer, 0, count);
+                outstream.Flush();
+            }
         }
 
         #endregion download file

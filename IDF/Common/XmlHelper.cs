@@ -30,6 +30,12 @@ namespace Runing.Increment
     {
         #region 字段方法
 
+        /// <summary>
+        /// SelectSingleNode()然后转成string
+        /// </summary>
+        /// <param name="element"></param>
+        /// <param name="xpath"></param>
+        /// <returns></returns>
         public static string SelectToString(this XmlNode element, string xpath)
         {
             XmlNode child = element.SelectSingleNode(xpath);
@@ -43,6 +49,12 @@ namespace Runing.Increment
             }
         }
 
+        /// <summary>
+        /// SelectSingleNode()然后转成bool
+        /// </summary>
+        /// <param name="element"></param>
+        /// <param name="xpath"></param>
+        /// <returns></returns>
         public static bool SelectToBool(this XmlNode element, string xpath)
         {
             XmlNode child = element.SelectSingleNode(xpath);
@@ -56,6 +68,12 @@ namespace Runing.Increment
             }
         }
 
+        /// <summary>
+        /// SelectSingleNode()然后转成Int32
+        /// </summary>
+        /// <param name="element"></param>
+        /// <param name="xpath"></param>
+        /// <returns></returns>
         public static int SelectToInt32(this XmlNode element, string xpath)
         {
             XmlNode child = element.SelectSingleNode(xpath);
@@ -69,6 +87,12 @@ namespace Runing.Increment
             }
         }
 
+        /// <summary>
+        /// SelectSingleNode()然后转成float
+        /// </summary>
+        /// <param name="element"></param>
+        /// <param name="xpath"></param>
+        /// <returns></returns>
         public static float SelectToFloat(this XmlNode element, string xpath)
         {
             XmlNode child = element.SelectSingleNode(xpath);
@@ -82,6 +106,12 @@ namespace Runing.Increment
             }
         }
 
+        /// <summary>
+        /// SelectSingleNode()然后转成Long
+        /// </summary>
+        /// <param name="element"></param>
+        /// <param name="xpath"></param>
+        /// <returns></returns>
         public static long SelectToLong(this XmlNode element, string xpath)
         {
             XmlNode child = element.SelectSingleNode(xpath);
@@ -95,6 +125,13 @@ namespace Runing.Increment
             }
         }
 
+        /// <summary>
+        /// 向一个XmlElement节点上加一个子节点，子节点写入string数据
+        /// </summary>
+        /// <param name="node"></param>
+        /// <param name="childName">子节点名字</param>
+        /// <param name="data"></param>
+        /// <returns></returns>
         public static XmlElement AppendChild(this XmlElement node, string childName, string data)
         {
             XmlDocument xmldoc = node.OwnerDocument;
@@ -105,6 +142,13 @@ namespace Runing.Increment
             return child;
         }
 
+        /// <summary>
+        /// 向一个XmlElement节点上加一个子节点，子节点写入bool数据
+        /// </summary>
+        /// <param name="node"></param>
+        /// <param name="childName">子节点名字</param>
+        /// <param name="data"></param>
+        /// <returns></returns>
         public static XmlElement AppendChild(this XmlElement node, string childName, bool data)
         {
             XmlDocument xmldoc = node.OwnerDocument;
@@ -115,6 +159,13 @@ namespace Runing.Increment
             return child;
         }
 
+        /// <summary>
+        /// 向一个XmlElement节点上加一个子节点，子节点写入int数据
+        /// </summary>
+        /// <param name="node"></param>
+        /// <param name="childName">子节点名字</param>
+        /// <param name="data"></param>
+        /// <returns></returns>
         public static XmlElement AppendChild(this XmlElement node, string childName, int data)
         {
             XmlDocument xmldoc = node.OwnerDocument;
@@ -125,6 +176,13 @@ namespace Runing.Increment
             return child;
         }
 
+        /// <summary>
+        /// 向一个XmlElement节点上加一个子节点，子节点写入float数据
+        /// </summary>
+        /// <param name="node"></param>
+        /// <param name="childName">子节点名字</param>
+        /// <param name="data"></param>
+        /// <returns></returns>
         public static XmlElement AppendChild(this XmlElement node, string childName, float data)
         {
             XmlDocument xmldoc = node.OwnerDocument;
@@ -135,6 +193,13 @@ namespace Runing.Increment
             return child;
         }
 
+        /// <summary>
+        /// 向一个XmlElement节点上加一个子节点，子节点写入long数据
+        /// </summary>
+        /// <param name="node"></param>
+        /// <param name="childName">子节点名字</param>
+        /// <param name="data"></param>
+        /// <returns></returns>
         public static XmlElement AppendChild(this XmlElement node, string childName, long data)
         {
             XmlDocument xmldoc = node.OwnerDocument;

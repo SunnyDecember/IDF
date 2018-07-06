@@ -3,14 +3,14 @@ using JumpKick.HttpLib;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 using Runing.Increment;
 using System;
+using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
 using System.Linq;
 using System.Net;
 using System.Threading;
-using xuexue.file;
 using System.Threading.Tasks;
-using System.Collections.Generic;
+using xuexue.file;
 
 namespace UnitTest
 {
@@ -46,7 +46,6 @@ namespace UnitTest
                     bool isDone = false;
                     Http.Get("http://mr.xuexuesoft.com:8010/Other/FileServer.exe").DownloadTo(fi.FullName, (bytesCopied, totalBytes) =>
                     {
-
                     }, onSuccess: (headers) =>
                     {
                         isDone = true;
@@ -77,7 +76,6 @@ namespace UnitTest
 
             //清除日志文件
             xuexue.LogFile.GetInst().ClearLogFileInFolder("../test/log", 0.1f);
-
         }
 
         ~UnitTest1()
@@ -88,21 +86,22 @@ namespace UnitTest
         /// <summary>
         /// 重设日志关联
         /// </summary>
-        private void ResetLog()
+        private void ResetLog(bool isDebug = true)
         {
             Runing.Increment.Log.ClearEvent();
-            Runing.Increment.Log.EventLogInfo += (s)=> { xuexue.DxDebug.LogFileOnly(s); };
-            Runing.Increment.Log.EventLogDebug += (s) => { xuexue.DxDebug.LogFileOnly(s); };
+            Runing.Increment.Log.EventLogInfo += (s) => { xuexue.DxDebug.LogFileOnly(s); };
             Runing.Increment.Log.EventLogWarning += (s) => { xuexue.DxDebug.LogFileOnly(s); };
             Runing.Increment.Log.EventLogError += (s) => { xuexue.DxDebug.LogFileOnly(s); };
-            ;
+
+            if (isDebug)
+                Runing.Increment.Log.EventLogDebug += (s) => { xuexue.DxDebug.LogFileOnly(s); };
         }
 
         /// <summary>
         /// 自带的DownloadTo方法的测试（如果路径上的文件已经被占用，那么就一直卡住）
         /// </summary>
         [TestMethod]
-        public void TestMethodDownloadTo()
+        public void TestMethodHttpLib1()
         {
             string url = "http://127.0.0.1:22333/Debug/Ionic.Zip.Unity.dll";
             string file = @"../test/Temp/Ionic.Zip.Unity.dll";
@@ -167,7 +166,7 @@ namespace UnitTest
         }
 
         [TestMethod]
-        public void TestMethod2()
+        public void TestMethodHttpLib2()
         {
             string url = "http://127.0.0.1:22333/Debug/Ionic.Zip.Unity.dll";
             string file = @"../test/Temp/Ionic.Zip.Unity.dll";
@@ -226,7 +225,7 @@ namespace UnitTest
             //FileHelper.CleanDirectory("../test/Temp");
 
             bool isDone = false;
-            IDFClient.Instance.Go("http://127.0.0.1:22333/test/IDFTest.zip", "../test/Temp", "../test/Target", "../test/Backup")
+            IDF.Update("http://127.0.0.1:22333/test/IDFTest.zip", "../test/Temp", "../test/Target", "../test/Backup")
             .OnDownloadSuccess((obj) =>
             {
                 Runing.Increment.Log.Info("TestMethodDownload():进入OnDownloadSuccess当前执行线程id=" + Thread.CurrentThread.ManagedThreadId);
@@ -235,9 +234,9 @@ namespace UnitTest
             .OnError((e) =>
             {
                 Runing.Increment.Log.Info("TestMethodDownload():进入OnError当前执行线程id=" + Thread.CurrentThread.ManagedThreadId);
-
+                Assert.Fail();
                 isDone = true;
-            });
+            }).Go();
 
             while (!isDone)
             {
@@ -246,7 +245,7 @@ namespace UnitTest
         }
 
         [TestMethod]
-        public  void TestMethodDownloadAsync()
+        public void TestMethodDownloadAsync()
         {
             ResetLog();//重设日志
             bool isDone = false;
@@ -261,7 +260,7 @@ namespace UnitTest
 
                 //FileHelper.CleanDirectory("../test/Temp");
 
-                IDFClient.Instance.Go("http://127.0.0.1:22333/test/IDFTest.zip", "../test/Temp", "../test/Target", "../test/Backup")
+                IDF.Update("http://127.0.0.1:22333/test/IDFTest.zip", "../test/Temp", "../test/Target", "../test/Backup")
                 .OnDownloadSuccess((obj) =>
                 {
                     Runing.Increment.Log.Info("TestMethodDownload():进入OnDownloadSuccess当前执行线程id=" + Thread.CurrentThread.ManagedThreadId);
@@ -272,14 +271,13 @@ namespace UnitTest
                     Runing.Increment.Log.Info("TestMethodDownload():进入OnError当前执行线程id=" + Thread.CurrentThread.ManagedThreadId);
 
                     isDone = true;
-                });
+                }).Go();
             });
             while (!isDone)
             {
                 Thread.Sleep(15);
             }
         }
-
 
         [TestMethod]
         public void TestMethodMoveFile()
@@ -295,7 +293,7 @@ namespace UnitTest
             Thread.Sleep(1000);
 
             bool isDone = false;
-            IDFClient.Instance.Go("http://127.0.0.1:22333/test/IDFTest.zip", "../test/Temp", "../test/Target", "../test/Backup")
+            IDF.Update("http://127.0.0.1:22333/test/IDFTest.zip", "../test/Temp", "../test/Target", "../test/Backup")
             .OnMoveFileDone((obj, success) =>
             {
                 Runing.Increment.Log.Info("移动文件成功后回调");
@@ -309,7 +307,7 @@ namespace UnitTest
             .OnError((e) =>
             {
                 isDone = true;
-            });
+            }).Go();
 
             while (!isDone)
             {
@@ -363,11 +361,11 @@ namespace UnitTest
                     }
                 }
             }
-            
+
             Thread.Sleep(500);
 
             bool isDone = false;
-            IDFClient.Instance.Go("http://127.0.0.1:22333/test/IDFTest.zip", "../test/Temp", "../test/Target", "../test/Backup")
+            IDF.Update("http://127.0.0.1:22333/test/IDFTest.zip", "../test/Temp", "../test/Target", "../test/Backup")
             .OnMoveFileDone((obj, success) =>
             {
                 Runing.Increment.Log.Info("移动文件成功后回调");
@@ -381,7 +379,7 @@ namespace UnitTest
             .OnError((e) =>
             {
                 isDone = true;
-            });
+            }).Go();
 
             while (!isDone)
             {
@@ -412,7 +410,6 @@ namespace UnitTest
             }
         }
 
-
         [TestMethod]
         public void TestMethodRecoverFile()
         {
@@ -432,7 +429,7 @@ namespace UnitTest
             Thread.Sleep(500);
 
             //干扰文件项
-            var ws= File.CreateText(new FileInfo("../Debug/TestFile.txt").FullName);
+            var ws = File.CreateText(new FileInfo("../Debug/TestFile.txt").FullName);
             ws.Write("123456789123456789");
             ws.Close();
 
@@ -454,7 +451,7 @@ namespace UnitTest
             }
 
             bool isDone = false;
-            IDFClient.Instance.Go("http://127.0.0.1:22333/test/IDFTest.zip", "../test/Temp", "../test/Target", "../test/Backup")
+            IDF.Update("http://127.0.0.1:22333/test/IDFTest.zip", "../test/Temp", "../test/Target", "../test/Backup")
             .OnMoveFileDone((obj, success) =>
             {
                 string str = File.ReadAllText(new FileInfo("../test/Target/TestFile.txt").FullName);
@@ -471,7 +468,7 @@ namespace UnitTest
             .OnError((e) =>
             {
                 isDone = true;
-            });
+            }).Go();
 
             while (!isDone)
             {
@@ -484,7 +481,7 @@ namespace UnitTest
             FileInfo[] backupAfterFiles = backupAfterDir.GetFiles("*", SearchOption.AllDirectories);
             Assert.IsTrue(backupBeforeMD5.Count == backupAfterFiles.Length);
 
-            for (int i = 0; i < backupAfterFiles.Length;i++)
+            for (int i = 0; i < backupAfterFiles.Length; i++)
             {
                 FileInfo file = backupAfterFiles[i];
                 Assert.IsTrue(backupBeforeMD5[file.FullName] == MD5Helper.FileMD5(file.FullName));
@@ -495,10 +492,48 @@ namespace UnitTest
         }
 
         [TestMethod]
+        public void TestMethodNoServer()
+        {
+            ResetLog(false);//重设日志
+
+            bool isDone = false;
+            Runing.Increment.Log.Info("UnitTest1.TestMethodNoServer(): http://127.0.0.1:11122");
+
+            IDF.Update("http://127.0.0.1:11122/test/IDFTest.zip", "../test/Temp", "../test/Target", "../test/Backup")
+            .OnMoveFileDone((obj, success) => { isDone = true; })
+            .OnDownloadSuccess((obj) => { obj.MoveFile(); })
+            .OnError((e) => { isDone = true; })
+            .Go();
+
+            while (!isDone) { Thread.Sleep(50); }
+            isDone = false;
+
+            Runing.Increment.Log.Info("UnitTest1.TestMethodNoServer(): http://baidu.com/IDFTest.zip");
+            IDF.Update("http://baidu.com/IDFTest.zip", "../test/Temp", "../test/Target", "../test/Backup")
+            .OnMoveFileDone((obj, success) => { isDone = true; })
+            .OnDownloadSuccess((obj) => { obj.MoveFile(); })
+            .OnError((e) => { isDone = true; })
+            .Go();
+
+            while (!isDone) { Thread.Sleep(50); }
+            isDone = false;
+
+            Runing.Increment.Log.Info("UnitTest1.TestMethodNoServer(): http://www.google.com");
+            IDF.Update("http://www.google.com/IDFTest.zip", "../test/Temp", "../test/Target", "../test/Backup")
+            .OnMoveFileDone((obj, success) => { isDone = true; })
+            .OnDownloadSuccess((obj) => { obj.MoveFile(); })
+            .OnError((e) => { isDone = true; })
+            .Go();
+
+            while (!isDone) { Thread.Sleep(50); }
+            isDone = false;
+        }
+
+        [TestMethod]
         public void TestMethodLog()
         {
             //Runing.Increment.Log.Warning("这是一个警告");
-           // var fs = File.Create("1231.md");
+            // var fs = File.Create("1231.md");
             //fs.WriteByte(123);
             //输出日志到"即时窗口"，"调试->窗口->即时" 只在调试时有输出，运行没有日志
             for (int i = 0; i < 100; i++)

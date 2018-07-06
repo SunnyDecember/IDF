@@ -16,12 +16,23 @@ namespace Runing.Increment
 
         public static event Action<string> EventLogError = null;
 
-        public static void ClearEvent()
+        /// <summary>
+        /// 清除所有绑定的事件
+        /// </summary>
+        /// <param name="debug">是否清除事件</param>
+        /// <param name="info">是否清除事件</param>
+        /// <param name="warning">是否清除事件</param>
+        /// <param name="error">是否清除事件</param>
+        public static void ClearEvent(bool debug = true, bool info = true, bool warning = true, bool error = true)
         {
-            EventLogDebug = null;
-            EventLogInfo = null;
-            EventLogWarning = null;
-            EventLogError = null;
+            if (debug)
+                EventLogDebug = null;
+            if (info)
+                EventLogInfo = null;
+            if (warning)
+                EventLogWarning = null;
+            if (error)
+                EventLogError = null;
         }
 
         public static void Debug(string msg)

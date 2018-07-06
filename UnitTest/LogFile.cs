@@ -359,14 +359,9 @@ namespace xuexue
                         _timer.Dispose();
                     }
 
-                    if (_streamWriter != null)
-                    {
-                        _streamWriter.Flush();
-                        _streamWriter.Close();
-                    }
                     if (_fileStream != null)
                     {
-                        _fileStream.Flush();
+                        _fileStream.Flush(true);
                         _fileStream.Close();
                     }
                 }

@@ -52,19 +52,19 @@ namespace WindowsFormsTest
 
             //FileHelper.CleanDirectory("../test/Temp");
 
-            bool isDone = false;
-            IDFClient.Instance.Go("http://127.0.0.1:22333/test/IDFTest.zip", "../test/Temp", "../test/Target", "../test/Backup")
+            //bool isDone = false;
+            IDF.Update("http://127.0.0.1:22333/test/IDFTest.zip", "../test/Temp", "../test/Target", "../test/Backup")
             .OnDownloadSuccess((obj) =>
             {
                 Runing.Increment.Log.Info("TestMethodDownload():进入OnDownloadSuccess当前执行线程id=" + Thread.CurrentThread.ManagedThreadId);
-                isDone = true;
+                //isDone = true;
             })
             .OnError((e) =>
             {
                 Runing.Increment.Log.Info("TestMethodDownload():进入OnError当前执行线程id=" + Thread.CurrentThread.ManagedThreadId);
 
-                isDone = true;
-            });
+                //isDone = true;
+            }).Go();
 
  
         }
