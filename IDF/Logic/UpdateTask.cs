@@ -26,6 +26,16 @@ namespace Runing.Increment
         public LocalSetting fcc;
 
         /// <summary>
+        /// 备份的文件
+        /// </summary>
+        private List<LocalFileItem> backupFileList = new List<LocalFileItem>();
+
+        /// <summary>
+        /// 当需要移动临时文件到目标文件夹，那么这里记录这些文件
+        /// </summary>
+        private List<LocalFileItem> hasMoveFileList = new List<LocalFileItem>();
+
+        /// <summary>
         ///
         /// </summary>
         private LocalFolder localFolder;
@@ -62,8 +72,11 @@ namespace Runing.Increment
         /// <returns></returns>
         public void MoveFile()
         {
+            Log.Info($"UpdateTask.MoveFile(): 开始移动文件！！！");
+
             //清空备份列表的记录
             backupFileList.Clear();
+            hasMoveFileList.Clear();
 
             try
             {
@@ -76,6 +89,7 @@ namespace Runing.Increment
                           //localFileItem.fileItem.MD5 ==  MD5Helper.FileMD5(localFileItem.targetFilePath))//<-----这里重新计算了一次MD5
                           localFileItem.fileItem.MD5 == localFileItem.lastTargetMD5)//暂时不再重新计算一次了
                     {
+                        Log.Info($"UpdateTask.MoveFile(): 不需要移动文件 {localFileItem.targetFilePath}");
                         continue;
                     }
                     else
@@ -97,8 +111,9 @@ namespace Runing.Increment
                     //从临时文件移动到目标文件
                     if (File.Exists(localFileItem.tempFilePath))
                     {
-                        Log.Info($"UpdateTask.MoveFile(): 移动临时文件到目标文件夹下 {localFileItem.fileItem.relativePath}");
+                        Log.Info($"UpdateTask.MoveFile(): 移动临时文件到目标文件夹下-> {localFileItem.fileItem.relativePath}");
                         File.Move(localFileItem.tempFilePath, localFileItem.targetFilePath);
+                        hasMoveFileList.Add(localFileItem);
                     }
                     else
                     {
@@ -109,13 +124,7 @@ namespace Runing.Increment
             catch (Exception e)
             {
                 Log.Warning($"UpdateTask.MoveFile(): 移动文件异常 {e}");
-
-                //操作目标文件发生异常，把备份文件恢复到目标文件。
-                RecoverFile();
-                if (null != EventMoveDone)
-                    EventMoveDone(this, false);
-
-                CompareMD5WithFrontBackTargetFile();
+                OnException();
             }
 
             //移动结束后，比对目标文件和xml的md5是否一致
@@ -134,18 +143,30 @@ namespace Runing.Increment
             }
         }
 
+        private void OnException()
+        {
+            //操作目标文件发生异常，把备份文件恢复到目标文件。
+            RecoverFile();
+            if (null != EventMoveDone)
+                EventMoveDone(this, false);
+
+            if (CheckMD5WithBeforeAfterTargetFile())
+            {
+                Log.Info("UpdataTask.MoveFile(): 备份前后的文件MD5一致");
+            }
+        }
+
         /// <summary>
         /// 对备份前后的目标文件md5比较
         /// </summary>
         /// <returns></returns>
-        private bool CompareMD5WithFrontBackTargetFile()
+        public bool CheckMD5WithBeforeAfterTargetFile()
         {
             bool isCorrect = true;
             foreach (var item in localFolder.fileItemClientDict.Values)
             {
                 if (!File.Exists(item.targetFilePath))
                 {
-                    Log.Warning("UpdateTask.CompareMD5WithFrontBackTargetFile(): 目标文件不存在 " + item.targetFilePath);
                     continue;
                 }
 
@@ -184,11 +205,6 @@ namespace Runing.Increment
         }
 
         /// <summary>
-        /// 备份的文件
-        /// </summary>
-        private List<LocalFileItem> backupFileList = new List<LocalFileItem>();
-
-        /// <summary>
         /// 尝试把目标文件剪切到备份文件夹下,如果目标文件存在才会移动备份
         /// </summary>
         /// <param name="localFileItem"></param>
@@ -196,24 +212,24 @@ namespace Runing.Increment
         {
             try
             {
-                //删除备份文件
-                if (File.Exists(localFileItem.backupFilePath))
-                    File.Delete(localFileItem.backupFilePath);
-
                 //创建备份文件的目录
                 FileInfo backupFile = new FileInfo(localFileItem.backupFilePath);
                 if (!backupFile.Directory.Exists)
                     Directory.CreateDirectory(backupFile.Directory.FullName);
 
-                //把需要备份的文件移动到备份文件夹。
                 if (File.Exists(localFileItem.targetFilePath))
                 {
+                    //尝试先删除备份文件
+                    if (File.Exists(localFileItem.backupFilePath))
+                        File.Delete(localFileItem.backupFilePath);
+
+                    //把需要备份的文件移动到备份文件夹。
                     File.Move(localFileItem.targetFilePath, localFileItem.backupFilePath);
                     Log.Info($"UpdateTask.TryBackupOneFile(): 移动目标文件到备份文件夹 {localFileItem.fileItem.relativePath}");
-                }
 
-                //记录备份文件
-                backupFileList.Add(localFileItem);
+                    //记录备份文件
+                    backupFileList.Add(localFileItem);
+                }
             }
             catch (Exception e)
             {
@@ -224,8 +240,24 @@ namespace Runing.Increment
         /// <summary>
         /// 把备份文件恢复到目标文件。
         /// </summary>
-        private void RecoverFile()
+        public void RecoverFile()
         {
+            //先把改动过的文件移动回临时文件夹
+            for (int i = 0; i < hasMoveFileList.Count; i++)
+            {
+                LocalFileItem localFileItem = hasMoveFileList[i];
+
+                if (!File.Exists(localFileItem.targetFilePath))
+                    continue;
+
+                if (File.Exists(localFileItem.tempFilePath))
+                    File.Delete(localFileItem.tempFilePath);
+
+                //把目标文件移动到临时文件
+                File.Move(localFileItem.targetFilePath, localFileItem.tempFilePath);
+                Log.Info($"UpdateTask.RecoverFile(): 把目标文件移动到临时文件 {localFileItem.fileItem.relativePath}");
+            }
+
             //遍历备份文件列表
             for (int i = 0; i < backupFileList.Count; i++)
             {
@@ -241,6 +273,10 @@ namespace Runing.Increment
                 File.Move(localFileItem.backupFilePath, localFileItem.targetFilePath);
                 Log.Info($"UpdateTask.RecoverFile(): 把备份文件恢复到目标文件 {localFileItem.fileItem.relativePath}");
             }
+
+            Log.Info($"UpdateTask.RecoverFile(): 备份文件恢复到目标文件结束");
+            hasMoveFileList.Clear();
+            backupFileList.Clear();
         }
 
         #endregion move file

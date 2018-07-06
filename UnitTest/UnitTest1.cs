@@ -10,6 +10,7 @@ using System.Net;
 using System.Threading;
 using xuexue.file;
 using System.Threading.Tasks;
+using System.Collections.Generic;
 
 namespace UnitTest
 {
@@ -349,14 +350,18 @@ namespace UnitTest
             //FileHelper.CleanDirectory("../test/Target");
             //FileHelper.CleanDirectory("../test/Backup");
 
-            FileInfo[] fis = new DirectoryInfo("../test/Target").GetFiles("*.*", SearchOption.AllDirectories);
-            for (int i = 0; i < fis.Length; i++)
+            if (Directory.Exists("../test/Target"))
             {
-                if (i % 2 == 0)
+                FileInfo[] fis = new DirectoryInfo("../test/Target").GetFiles("*.*", SearchOption.AllDirectories);
+                for (int i = 0; i < fis.Length; i++)
                 {
-                    File.Delete(fis[i].FullName);
+                    if (i % 2 == 0)
+                    {
+                        File.Delete(fis[i].FullName);
+                    }
                 }
             }
+            
             Thread.Sleep(500);
 
             bool isDone = false;
@@ -403,6 +408,88 @@ namespace UnitTest
                 string itemTarFilePath = Path.Combine(new DirectoryInfo("../test/Target").FullName, item.relativePath);
                 Assert.IsTrue(MD5Helper.FileMD5(itemTarFilePath) == item.MD5);
             }
+        }
+
+
+        [TestMethod]
+        public void TestMethodRecoverFile()
+        {
+            ResetLog();//重设日志
+
+            if (Directory.Exists("../test/Target"))
+            {
+                FileInfo[] fis = new DirectoryInfo("../test/Target").GetFiles("*", SearchOption.AllDirectories);
+                for (int i = 0; i < fis.Length; i++)
+                {
+                    if (i % 2 == 0)
+                    {
+                        File.Delete(fis[i].FullName);
+                    }
+                }
+            }
+            Thread.Sleep(500);
+
+            //干扰文件项
+            var ws= File.CreateText(new FileInfo("../Debug/TestFile.txt").FullName);
+            ws.Write("123456789123456789");
+            ws.Close();
+
+            ws = File.CreateText(new FileInfo("../test/Target/TestFile.txt").FullName);
+            ws.Write("12345");
+            ws.Close();
+
+            Runing.Increment.Log.Info("UnitTest1.TestMethodRecoverFile():生成xml文件");
+            IDFHelper.CreatConfigFileWithXml("../Debug/", "http://127.0.0.1:22333/Debug/", "../test/IDFTest.zip");
+
+            //记录备份前目标文件的md5值
+            DirectoryInfo backupBeforeDir = new DirectoryInfo("../test/Target");
+            FileInfo[] backupBeforeFiles = backupBeforeDir.GetFiles("*", SearchOption.AllDirectories);
+            Dictionary<string, string> backupBeforeMD5 = new Dictionary<string, string>();
+            for (int i = 0; i < backupBeforeFiles.Length; i++)
+            {
+                FileInfo file = backupBeforeFiles[i];
+                backupBeforeMD5.Add(file.FullName, MD5Helper.FileMD5(file.FullName));
+            }
+
+            bool isDone = false;
+            IDFClient.Instance.Go("http://127.0.0.1:22333/test/IDFTest.zip", "../test/Temp", "../test/Target", "../test/Backup")
+            .OnMoveFileDone((obj, success) =>
+            {
+                string str = File.ReadAllText(new FileInfo("../test/Target/TestFile.txt").FullName);
+                Assert.IsTrue(str == "123456789123456789");
+
+                obj.RecoverFile();
+                isDone = true;
+            })
+            .OnDownloadSuccess((obj) =>
+            {
+                //关闭那些程序
+                obj.MoveFile();
+            })
+            .OnError((e) =>
+            {
+                isDone = true;
+            });
+
+            while (!isDone)
+            {
+                Thread.Sleep(50);
+            }
+
+            //记录备份后目标文件的md5值
+            Runing.Increment.Log.Info($"UnitTest1.TestMethodRecoverFile(): 开始检查备份前后的文件...");
+            DirectoryInfo backupAfterDir = new DirectoryInfo("../test/Target");
+            FileInfo[] backupAfterFiles = backupAfterDir.GetFiles("*", SearchOption.AllDirectories);
+            Assert.IsTrue(backupBeforeMD5.Count == backupAfterFiles.Length);
+
+            for (int i = 0; i < backupAfterFiles.Length;i++)
+            {
+                FileInfo file = backupAfterFiles[i];
+                Assert.IsTrue(backupBeforeMD5[file.FullName] == MD5Helper.FileMD5(file.FullName));
+            }
+
+            string str2 = File.ReadAllText(new FileInfo("../test/Target/TestFile.txt").FullName);
+            Assert.IsTrue(str2 == "12345");
         }
 
         [TestMethod]
