@@ -214,6 +214,8 @@ namespace UnitTest
         public void TestMethodDownload()
         {
             ResetLog();//重设日志
+            //SynchronizationContext contex = new SynchronizationContext();
+            //SynchronizationContext.SetSynchronizationContext(contex);
 
             //这样调用它没有跳回原来的线程
             Runing.Increment.Log.Info("TestMethodDownload():当前执行线程id=" + Thread.CurrentThread.ManagedThreadId);

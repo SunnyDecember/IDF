@@ -418,6 +418,10 @@ namespace Runing.Increment
                     Log.Info("UpdateTask.DownLoadOneFile():存在一致的临时文件" + localFileItem.fileItem.relativePath);
                     return;
                 }
+                else
+                {
+                    File.Delete(localFileItem.tempFilePath);//如果下好的临时文件MD5不一致，那么就删除这个以前的临时文件
+                }
             }
 
             //如果这个临时文件所在的上级文件夹不存在那么就创建
@@ -442,15 +446,9 @@ namespace Runing.Increment
 
             try
             {
-                fs = new FileStream(localFileItem.tempFilePath, FileMode.OpenOrCreate);
-                if (localFileItem.fileItem.size - fs.Length > 1024 * 1024 * 2 &&//待下载大小,和已经下载了的大小都超过2M才断点
-                    fs.Length > 1024 * 1024 * 2)
-                { }
-                else
-                {
-                    fs.Close();
-                    fs = new FileStream(localFileItem.tempFilePath, FileMode.Create);
-                }
+                //下载文件的后缀加上.temp
+                fs = new FileStream(localFileItem.tempFilePath + ".temp", FileMode.OpenOrCreate);
+
                 Log.Info("UpdateTask.DownLoadOneFile():开始http连接...");
                 Http.Get(fileItem.url)
                 .OnMake((req) =>
@@ -495,6 +493,8 @@ namespace Runing.Increment
                     if (isDone > 0)
                         break;
                 }
+                //下载成功后把文件名的.temp去掉
+                File.Move(localFileItem.tempFilePath + ".temp", localFileItem.tempFilePath);
             }
             catch (Exception e)
             {
