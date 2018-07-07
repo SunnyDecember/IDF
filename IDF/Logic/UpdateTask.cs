@@ -120,12 +120,8 @@ namespace Runing.Increment
                         }
                     }
 
-                    //创建目标文件的目录。
-                    FileInfo targetFile = new FileInfo(localFileItem.targetFilePath);
-                    if (!targetFile.Directory.Exists)
-                    {
-                        Directory.CreateDirectory(targetFile.Directory.FullName);
-                    }
+                    //检查创建目标文件的所在目录。
+                    FileHelper.CheckCreateParentDir(localFileItem.targetFilePath);
 
                     //从临时文件移动到目标文件
                     if (File.Exists(localFileItem.tempFilePath))
@@ -231,10 +227,8 @@ namespace Runing.Increment
         {
             try
             {
-                //创建备份文件的目录
-                FileInfo backupFile = new FileInfo(localFileItem.backupFilePath);
-                if (!backupFile.Directory.Exists)
-                    Directory.CreateDirectory(backupFile.Directory.FullName);
+                //检查创建备份文件的所在目录
+                FileHelper.CheckCreateParentDir(localFileItem.backupFilePath);
 
                 if (File.Exists(localFileItem.targetFilePath))
                 {
@@ -404,6 +398,15 @@ namespace Runing.Increment
                 errorCount++;
             }
 
+            //重试超过五次是下载失败
+            if (errorCount >= 5)
+            {
+                Log.Warning($"UpdateTask.StartDownLoad():下载文件失败,重试超过5次!");
+                try { EventError?.Invoke(new Exception(fcc.xmlUrl)); }
+                catch (Exception ex) { Log.Warning("UpdateTask.StartDownLoad():执行用户事件EventError异常:" + ex.Message); }
+                return;
+            }
+
             //执行下载完成事件
             if (EventDownloadSuccess != null)
             {
@@ -435,6 +438,7 @@ namespace Runing.Increment
                 {
                     //那么这个文件就不需要下载了
                     Log.Info("UpdateTask.DownLoadOneFile():存在一致的临时文件" + localFileItem.fileItem.relativePath);
+                    localFileItem.IsNeedDownload = false;//标记它不用下载了
                     return;
                 }
                 else
@@ -444,11 +448,7 @@ namespace Runing.Increment
             }
 
             //如果这个临时文件所在的上级文件夹不存在那么就创建
-            FileInfo fi = new FileInfo(localFileItem.tempFilePath);
-            if (!fi.Directory.Exists)
-            {
-                Directory.CreateDirectory(fi.Directory.FullName);
-            }
+            FileHelper.CheckCreateParentDir(localFileItem.tempFilePath);
 
             int isDone = 0;
             Interlocked.Exchange(ref isDone, 0);
@@ -543,7 +543,11 @@ namespace Runing.Increment
                     else
                     {
                         //计算当前的MD5，确保文件正确
-                        if (!MD5Helper.Compare(item.tempFilePath, item.fileItem.MD5, item.fileItem.size))
+                        if (MD5Helper.Compare(item.tempFilePath, item.fileItem.MD5, item.fileItem.size))
+                        {
+                            item.IsNeedDownload = false;//如果文件一致了那么认为它不再需要下载了
+                        }
+                        else
                         {
                             Log.Info("UpdateTask.CheckTempFileCorrect():错误->检查文件项不正确，删除文件" + item.tempFilePath);
                             File.Delete(item.tempFilePath);

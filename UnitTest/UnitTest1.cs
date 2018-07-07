@@ -234,7 +234,8 @@ namespace UnitTest
             .OnError((e) =>
             {
                 Runing.Increment.Log.Info("TestMethodDownload():进入OnError当前执行线程id=" + Thread.CurrentThread.ManagedThreadId);
-                Assert.Fail();
+
+                Assert.Fail();//下载错误，认为不通过
                 isDone = true;
             }).Go();
 
@@ -249,6 +250,7 @@ namespace UnitTest
         {
             ResetLog();//重设日志
             bool isDone = false;
+            bool isFail = false;
 
             //使用这个线程它也不会重新跳回原来的线程
             Task.Run(() =>
@@ -269,14 +271,15 @@ namespace UnitTest
                 .OnError((e) =>
                 {
                     Runing.Increment.Log.Info("TestMethodDownload():进入OnError当前执行线程id=" + Thread.CurrentThread.ManagedThreadId);
-
                     isDone = true;
+                    isFail = true;
                 }).Go();
             });
             while (!isDone)
             {
                 Thread.Sleep(15);
             }
+            Assert.IsFalse(isFail);
         }
 
         [TestMethod]
