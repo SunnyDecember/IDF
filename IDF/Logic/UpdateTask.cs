@@ -16,17 +16,27 @@ namespace Runing.Increment
     /// </summary>
     public class UpdateTask
     {
-        internal UpdateTask(LocalSetting fcc)
+        internal UpdateTask(LocalSetting setting)
         {
-            localFolder = new LocalFolder(fcc);
+            localFolder = new LocalFolder(setting);
 
-            this.fcc = fcc;
+            this.setting = setting;
         }
 
         /// <summary>
         /// 本地设置的一个记录，它记录了用户设置的临时文件夹位置，目标文件夹位置，备份文件夹位置等等。
         /// </summary>
-        public LocalSetting fcc;
+        public LocalSetting setting;
+
+        /// <summary>
+        /// 远程服务器上的文件夹文件内容，暴露出来提供使用
+        /// </summary>
+        public OriginFolder originFolder;
+
+        /// <summary>
+        /// 本地文件夹数据，它对应一个OriginFolder数据
+        /// </summary>
+        public LocalFolder localFolder;
 
         /// <summary>
         /// 备份的文件
@@ -37,11 +47,6 @@ namespace Runing.Increment
         /// 当需要移动临时文件到目标文件夹，那么这里记录这些文件
         /// </summary>
         private List<LocalFileItem> hasMoveFileList = new List<LocalFileItem>();
-
-        /// <summary>
-        /// 本地文件夹数据，它对应一个OriginFolder数据
-        /// </summary>
-        private LocalFolder localFolder;
 
         private event Action<Exception> EventError = null;
 
@@ -311,13 +316,13 @@ namespace Runing.Increment
             Interlocked.Exchange(ref isDone, 0);
 
             //下载ConfigXML(异步的)
-            Http.Get(fcc.xmlUrl).OnSuccess((WebHeaderCollection collection, Stream stream) =>
+            Http.Get(setting.xmlUrl).OnSuccess((WebHeaderCollection collection, Stream stream) =>
             {
                 try
                 {
                     var xml = XmlHelper.CreatXml();
 
-                    if (fcc.xmlUrl.EndsWith(".zip"))
+                    if (setting.xmlUrl.EndsWith(".zip"))
                     {
                         MemoryStream ms = new MemoryStream();
                         CopyStream(stream, ms);
@@ -335,12 +340,12 @@ namespace Runing.Increment
                         xml.Load(stream); //从下载文件流中读xml
                     }
                     Log.Info("UpdateTask.StartDownLoad():下载xml成功!");
-                    OriginFolder fis = new OriginFolder();
+                    originFolder = new OriginFolder();
                     var node = xml.DocumentElement.SelectSingleNode("./" + typeof(OriginFolder).Name);
-                    fis.FromXml(node);//从xml文件根节点反序列化
+                    originFolder.FromXml(node);//从xml文件根节点反序列化
 
                     //使用服务器上下载下来的来初始化客户端的
-                    localFolder.InitWithFolderConfig(fis.fileItemDict);
+                    localFolder.InitWithFolderConfig(originFolder.fileItemDict);
 
                     //检查本地哪些文件需要下载
                     localFolder.CheekNeedDownload();
@@ -349,7 +354,7 @@ namespace Runing.Increment
                 }
                 catch (Exception e)
                 {
-                    Log.Error($"UpdateTask.StartDownLoad():下载xml异常,{fcc.xmlUrl} - " + e.Message);
+                    Log.Error($"UpdateTask.StartDownLoad():下载xml异常,{setting.xmlUrl} - " + e.Message);
                     try
                     {
                         EventError?.Invoke(e);
@@ -362,7 +367,7 @@ namespace Runing.Increment
                 }
             }).OnFail((e) =>
             {
-                Log.Warning($"UpdateTask.StartDownLoad():OnFail()下载xml失败,{fcc.xmlUrl} - " + e.Message);
+                Log.Warning($"UpdateTask.StartDownLoad():OnFail()下载xml失败,{setting.xmlUrl} - " + e.Message);
                 try { EventError?.Invoke(e); }
                 catch (Exception ex) { Log.Warning("UpdateTask.StartDownLoad():执行用户事件EventError异常:" + ex.Message); }
                 Interlocked.Decrement(ref isDone);//也标记它非零了, -1
@@ -402,7 +407,7 @@ namespace Runing.Increment
             if (errorCount >= 5)
             {
                 Log.Warning($"UpdateTask.StartDownLoad():下载文件失败,重试超过5次!");
-                try { EventError?.Invoke(new Exception(fcc.xmlUrl)); }
+                try { EventError?.Invoke(new Exception(setting.xmlUrl)); }
                 catch (Exception ex) { Log.Warning("UpdateTask.StartDownLoad():执行用户事件EventError异常:" + ex.Message); }
                 return;
             }
@@ -429,7 +434,7 @@ namespace Runing.Increment
             {
                 return;
             }
-            Log.Info("UpdateTask.DownLoadOneFile():开始下载文件项" + localFileItem.fileItem.relativePath);
+            Log.Info("UpdateTask.DownLoadOneFile():开始下载文件项: " + localFileItem.fileItem.url);
             FileItem fileItem = localFileItem.fileItem;
 
             if (File.Exists(localFileItem.tempFilePath))//如果已经下过一个了
@@ -479,7 +484,7 @@ namespace Runing.Increment
                     try
                     {
                         fs.Seek(fs.Length, SeekOrigin.Begin);
-                        CopyStream(stream, fs);
+                        CopyStream(stream, fs);//阻塞的下载
                         Log.Info("UpdateTask.DownLoadOneFile():下载成功!");
                     }
                     catch (Exception e)
@@ -568,7 +573,7 @@ namespace Runing.Increment
         }
 
         /// <summary>
-        /// 拷贝两个流
+        /// 阻塞的拷贝两个流
         /// </summary>
         /// <param name="instream"></param>
         /// <param name="outstream"></param>

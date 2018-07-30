@@ -8,7 +8,7 @@ namespace Runing.Increment
     /// <summary>
     /// 本地文件夹
     /// </summary>
-    internal class LocalFolder
+    public class LocalFolder
     {
         public LocalFolder(LocalSetting localSetting)
         {
@@ -51,7 +51,7 @@ namespace Runing.Increment
         /// <summary>
         /// 计算本地文件的MD5，标记哪些文件需要下载
         /// </summary>
-        public void CheekNeedDownload()
+        internal void CheekNeedDownload()
         {
             foreach (LocalFileItem item in fileItemClientDict.Values)
             {
