@@ -91,7 +91,7 @@ namespace Runing.Increment
         #region move file
 
         /// <summary>
-        /// 从临时文件移动到目标文件
+        /// 从临时文件移动到目标文件，这是一个阻塞函数。如果在主线程中可能应该异步调用执行。但是这样最后会导致事件无法回到主线程。
         /// </summary>
         /// <returns></returns>
         public void MoveFile()
@@ -301,6 +301,9 @@ namespace Runing.Increment
 
         #region download file
 
+        /// <summary>
+        /// 这函数使用async-await实现异步的逻辑，保证了文件一个一个的下载
+        /// </summary>
         public void Go()
         {
             Log.Debug("UpdateTask.Go():当前执行线程id=" + Thread.CurrentThread.ManagedThreadId);
@@ -315,6 +318,7 @@ namespace Runing.Increment
             int isDone = 0;
             Interlocked.Exchange(ref isDone, 0);
 
+            Exception lastException = null;
             //下载ConfigXML(异步的)
             Http.Get(setting.xmlUrl).OnSuccess((WebHeaderCollection collection, Stream stream) =>
             {
@@ -355,21 +359,13 @@ namespace Runing.Increment
                 catch (Exception e)
                 {
                     Log.Error($"UpdateTask.StartDownLoad():下载xml异常,{setting.xmlUrl} - " + e.Message);
-                    try
-                    {
-                        EventError?.Invoke(e);
-                    }
-                    catch (Exception ex)
-                    {
-                        Log.Error("UpdateTask.StartDownLoad():执行用户事件EventError异常:" + ex.Message);
-                    }
+                    lastException = e;//记录异常信息
                     Interlocked.Decrement(ref isDone);//也标记它非零了, -1
                 }
             }).OnFail((e) =>
             {
                 Log.Warning($"UpdateTask.StartDownLoad():OnFail()下载xml失败,{setting.xmlUrl} - " + e.Message);
-                try { EventError?.Invoke(e); }
-                catch (Exception ex) { Log.Warning("UpdateTask.StartDownLoad():执行用户事件EventError异常:" + ex.Message); }
+                lastException = e;//记录异常信息
                 Interlocked.Decrement(ref isDone);//也标记它非零了, -1
             }).Go();
 
@@ -384,7 +380,11 @@ namespace Runing.Increment
                     break;
 
                 if (isDone < 0)
+                {
+                    try { EventError?.Invoke(lastException); }
+                    catch (Exception ex) { Log.Warning("UpdateTask.StartDownLoad():执行用户事件EventError异常:" + ex.Message); }
                     return;//这里下载xml失败了，那这个函数不需要往下走了
+                }
             }
 
             int errorCount = 0;
@@ -460,10 +460,10 @@ namespace Runing.Increment
 
             FileStream fs = null;
 
-            //需要下载的文件是空文件，不下载，本地直接创建一个就行了。
-            if (0 == localFileItem.fileItem.size)
+            //需要下载的文件是空文件，不用下载，本地直接创建一个空文件就行了。
+            if (localFileItem.fileItem.size == 0)
             {
-                fs = new FileStream(localFileItem.tempFilePath, FileMode.OpenOrCreate);
+                fs = new FileStream(localFileItem.tempFilePath, FileMode.Create);
                 fs.Close();
                 return;
             }
@@ -484,16 +484,16 @@ namespace Runing.Increment
                     try
                     {
                         fs.Seek(fs.Length, SeekOrigin.Begin);
-                        CopyStream(stream, fs);//阻塞的下载
+                        CopyStream(stream, fs);//阻塞的下载?但是进入OnSuccess会是一个异步小线程
                         Log.Info("UpdateTask.DownLoadOneFile():下载成功!");
                     }
                     catch (Exception e)
                     {
-                        Log.Error("UpdateTask.DownLoadOneFile():下载异常:" + e.Message);
+                        Log.Error($"UpdateTask.DownLoadOneFile.CopyStream():{fileItem.url}下载异常:" + e.Message);
                         //EventError?.Invoke(e); //暂时不传出事件了
                     }
                     fs.Close();
-                    //isDone = true;
+
                     Interlocked.Increment(ref isDone);//下载完成
                 })
                 .OnFail((e) =>
@@ -501,10 +501,9 @@ namespace Runing.Increment
                     if (fs != null)
                         fs.Close();
 
-                    Log.Error("UpdateTask.DownLoadOneFile():下载异常:" + e.Message);
+                    Log.Error($"UpdateTask.DownLoadOneFile.OnFail():{fileItem.url}下载异常:" + e.Message);
                     //EventError?.Invoke(e); //暂时不传出事件了
 
-                    //isDone = true;
                     Interlocked.Increment(ref isDone);//下载完成
                 }).Go();
 

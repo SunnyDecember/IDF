@@ -165,9 +165,22 @@ namespace UnitTest
             }
         }
 
+        ///-------------------------------------------------------------------------------------------------
+        /// <summary>
+        /// (Unit Test Method) tests method HTTP library 2.
+        /// 这个函数的目前执行日志如下：
+        /// [][12][07/31][06:05:37:448]UnitTest.TestMethodHttpLib2():启动当前执行线程id=12
+        /// [] [12] [07/31] [06:05:37:697] UnitTest.TestMethodHttpLib2():Go之后执行线程id=12
+        /// [] [15] [07/31] [06:05:37:775] UnitTest.TestMethodHttpLib2():OnSuccess里执行线程id=15
+        /// </summary>
+        ///
+        /// <remarks> Surface, 2018/7/31. </remarks>
+        ///-------------------------------------------------------------------------------------------------
         [TestMethod]
         public void TestMethodHttpLib2()
         {
+            ResetLog();//重设日志
+
             string url = "http://127.0.0.1:22333/Debug/Ionic.Zip.Unity.dll";
             string file = @"../test/Temp/Ionic.Zip.Unity.dll";
             FileInfo fi = new FileInfo(file);
@@ -176,10 +189,11 @@ namespace UnitTest
             {
                 Directory.CreateDirectory(fi.Directory.FullName);
             }
-
+            Runing.Increment.Log.Debug("UnitTest.TestMethodHttpLib2():启动当前执行线程id=" + Thread.CurrentThread.ManagedThreadId);
             bool isDone = false;
             Http.Get(url).OnSuccess((WebHeaderCollection a, Stream s) =>
             {
+                Runing.Increment.Log.Debug("UnitTest.TestMethodHttpLib2():OnSuccess里执行线程id=" + Thread.CurrentThread.ManagedThreadId);
                 FileStream fs = File.Create(file);
                 CopyStream(s, fs);
                 fs.Close();
@@ -190,7 +204,7 @@ namespace UnitTest
             //    Console.WriteLine("UnitTestXML.TestMethod1():错误！");
             //})
             .Go();
-
+            Runing.Increment.Log.Debug("UnitTest.TestMethodHttpLib2():Go之后执行线程id=" + Thread.CurrentThread.ManagedThreadId);
             while (!isDone)
             {
                 Thread.Sleep(50);
@@ -226,18 +240,18 @@ namespace UnitTest
 
             bool isDone = false;
             IDF.Update("http://127.0.0.1:22333/test/IDFTest.zip", "../test/Temp", "../test/Target", "../test/Backup")
-            .OnDownloadSuccess((obj) =>
-            {
-                Runing.Increment.Log.Info("TestMethodDownload():进入OnDownloadSuccess当前执行线程id=" + Thread.CurrentThread.ManagedThreadId);
-                isDone = true;
-            })
-            .OnError((e) =>
-            {
-                Runing.Increment.Log.Info("TestMethodDownload():进入OnError当前执行线程id=" + Thread.CurrentThread.ManagedThreadId);
+               .OnDownloadSuccess((obj) =>
+               {
+                   Runing.Increment.Log.Info("TestMethodDownload():进入OnDownloadSuccess当前执行线程id=" + Thread.CurrentThread.ManagedThreadId);
+                   isDone = true;
+               })
+               .OnError((e) =>
+               {
+                   Runing.Increment.Log.Info("TestMethodDownload():进入OnError当前执行线程id=" + Thread.CurrentThread.ManagedThreadId);
 
-                Assert.Fail();//下载错误，认为不通过
-                isDone = true;
-            }).Go();
+                   Assert.Fail();//下载错误，认为不通过
+                   isDone = true;
+               }).Go();
 
             while (!isDone)
             {
@@ -305,7 +319,8 @@ namespace UnitTest
             .OnDownloadSuccess((obj) =>
             {
                 //关闭那些程序
-                obj.MoveFile();
+                //异步的移动文件
+               Task.Run(()=> { obj.MoveFile(); });
             })
             .OnError((e) =>
             {
@@ -377,7 +392,8 @@ namespace UnitTest
             .OnDownloadSuccess((obj) =>
             {
                 //关闭那些程序
-                obj.MoveFile();
+                //异步的移动文件
+                Task.Run(() => { obj.MoveFile(); });
             })
             .OnError((e) =>
             {
