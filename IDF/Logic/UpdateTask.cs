@@ -76,6 +76,8 @@ namespace Runing.Increment
             return this;
         }
 
+        #region move file
+
         /// <summary>
         /// 设置移动文件结束的回调函数，移动结束可能仍然是失败的。
         ///  其中Action的第二个参数bool，如果移动成功返回true，发生错误返回false。
@@ -87,8 +89,6 @@ namespace Runing.Increment
             EventMoveDone += action;
             return this;
         }
-
-        #region move file
 
         /// <summary>
         /// 从临时文件移动到目标文件，这是一个阻塞函数。如果在主线程中可能应该异步调用执行。但是这样最后会导致事件无法回到主线程。
@@ -108,7 +108,7 @@ namespace Runing.Increment
                 {
                     LocalFileItem localFileItem = kv.Value;
 
-                    //如果目标文件是否已经存在，目标文件和临时文件的md5是否一致。都不成立就备份目标文件到备份文件夹下。
+                    //判断目标文件是否已经存在，目标文件和临时文件的md5是否一致。都不成立就备份目标文件到备份文件夹下。
                     if (File.Exists(localFileItem.targetFilePath) &&
                           //localFileItem.fileItem.MD5 ==  MD5Helper.FileMD5(localFileItem.targetFilePath))//<-----这里重新计算了一次MD5
                           localFileItem.fileItem.MD5 == localFileItem.lastTargetMD5)//暂时不再重新计算一次了

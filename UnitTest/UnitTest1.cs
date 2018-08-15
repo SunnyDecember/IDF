@@ -562,5 +562,40 @@ namespace UnitTest
                 // Thread.Sleep(1);
             }
         }
+
+        /// <summary>
+        /// 测试下载(仅仅下载，不包含移动文件)
+        /// </summary>
+        [TestMethod]
+        public void TestMethodDownloadTaskAlone()
+        {
+            //先创建XML
+            //TestMethodCreatXML();
+
+            //bool isDone = false;
+            //IDF.Download("http://127.0.0.1:22333/test/IDFTest.zip", "../test/IDFTest.xml", "../test/Temp", "../test/Target")
+            //.OnDownloadSuccess((obj) => { isDone = true; })
+            //.OnError((e) => { isDone = true; })
+            //.Go();
+
+            //while (!isDone)
+            //{
+            //    Thread.Sleep(15);
+            //}
+        }
+
+        /// <summary>
+        /// 测试移动文件（仅仅移动文件，不包含下载）
+        ///  移动结束后，匹配xml和目标文件夹，找到哪些目标文件夹中的文件不存在xml中，那么删除这些多余的文件。
+        /// </summary>
+        [TestMethod]
+        public void TestMethodMoveFileAlone()
+        {
+            //IDF.Move("../test/IDFTest.xml", "../test/Temp", "../test/Target", "../test/Backup")
+            //.OnMoveFileDone((moveFile, isSuccess) =>
+            //{
+
+            //}).OnError(e => { }).Go();
+        }
     }
 }

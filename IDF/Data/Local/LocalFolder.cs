@@ -44,7 +44,10 @@ namespace Runing.Increment
                 fic.targetFilePath = Path.Combine(localSetting.targetFolderPath, fic.fileItem.relativePath);
                 fic.backupFilePath = Path.Combine(localSetting.backupFolderPath, fic.fileItem.relativePath);
 
-                fileItemClientDict.Add(fic.fileItem.relativePath, fic);
+                if (File.Exists(fic.targetFilePath))
+                    fic.lastTargetMD5 = MD5Helper.FileMD5(fic.targetFilePath);//记录一下更新前的这个文件的md5
+
+                fileItemClientDict.Add(fic.fileItem.relativePath.Replace("\\", "/"), fic);
             }
         }
 
@@ -58,7 +61,7 @@ namespace Runing.Increment
                 item.IsNeedDownload = true;//默认标记它需要下载
                 if (File.Exists(item.targetFilePath))
                 {
-                    item.lastTargetMD5 = MD5Helper.FileMD5(item.targetFilePath);//记录一下更新前的这个文件的md5
+                    //item.lastTargetMD5 = MD5Helper.FileMD5(item.targetFilePath);//记录一下更新前的这个文件的md5
                     if (item.lastTargetMD5 == item.fileItem.MD5)
                     {
                         item.IsNeedDownload = false;//只有这一种情况不下载
