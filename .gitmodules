@@ -4,3 +4,6 @@
 [submodule "httplib"]
 	path = httplib
 	url = git@github.com:daixian/httplib.git
+[submodule "xuexue.utility"]
+	path = xuexue.utility
+	url = git@github.com:daixian/xuexue.utility.git
